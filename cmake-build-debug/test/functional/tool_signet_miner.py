@@ -1,0 +1,1 @@
+/home/student/CLionProjects/projects/bitcoin/test/functional/tool_signet_miner.py

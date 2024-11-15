@@ -1,0 +1,515 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "src/wallet/libbitcoin_wallet.a"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"target_link_libraries",
+			"include_directories",
+			"target_sources"
+		],
+		"files" : 
+		[
+			"src/wallet/CMakeLists.txt",
+			"src/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 6,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 36,
+				"parent" : 0
+			},
+			{
+				"file" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 9,
+				"parent" : 3
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 49,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-O0 -ftrapv -g3 -std=c++20 -fPIC -fdiagnostics-color=always"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-fno-extended-identifiers"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-ffile-prefix-map=/home/student/CLionProjects/projects/bitcoin/src=."
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-fstack-reuse=none"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wextra"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wformat"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wformat-security"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wvla"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wredundant-decls"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wdate-time"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wduplicated-branches"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wduplicated-cond"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wlogical-op"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Woverloaded-virtual"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wsuggest-override"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wimplicit-fallthrough"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wunreachable-code"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wundef"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wno-unused-parameter"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-Wstack-protector"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-fstack-protector-all"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-fcf-protection=full"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-fstack-clash-protection"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 2,
+					"define" : "ABORT_ON_FAILED_ASSUME"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "BOOST_MULTI_INDEX_DISABLE_SERIALIZATION"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "BOOST_NO_CXX98_FUNCTION_BASE"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "DEBUG"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "DEBUG_LOCKCONTENTION"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "DEBUG_LOCKORDER"
+				},
+				{
+					"backtrace" : 2,
+					"define" : "RPC_DOC_CHECK"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 4,
+					"path" : "/home/student/CLionProjects/projects/bitcoin/cmake-build-debug/src"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/home/student/CLionProjects/projects/bitcoin/src"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/student/CLionProjects/projects/bitcoin/src/univalue/include"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					1
+				],
+				"standard" : "20"
+			},
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin_clientversion::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin_consensus::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin_common::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin_crypto::@f9c2fa495612d34facca"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin_crypto_sse41::@f9c2fa495612d34facca"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin_crypto_avx2::@f9c2fa495612d34facca"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin_crypto_x86_shani::@f9c2fa495612d34facca"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "univalue::@e2841633399f66c6a649"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin_util::@6bc12a100e338ba65b7b"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "secp256k1::@b777a971afae55932f40"
+		}
+	],
+	"id" : "bitcoin_wallet::@3093704cd61b9b7b8c7a",
+	"name" : "bitcoin_wallet",
+	"nameOnDisk" : "libbitcoin_wallet.a",
+	"paths" : 
+	{
+		"build" : "src/wallet",
+		"source" : "src/wallet"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/coincontrol.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/coinselection.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/context.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/crypter.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/db.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/dump.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/external_signer_scriptpubkeyman.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/feebumper.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/fees.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/interfaces.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/load.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/migrate.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/receive.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/rpc/addresses.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/rpc/backup.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/rpc/coins.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/rpc/encrypt.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/rpc/signmessage.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/rpc/spend.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/rpc/transactions.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/rpc/util.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/rpc/wallet.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/scriptpubkeyman.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/spend.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/transaction.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/wallet.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/walletdb.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/walletutil.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 5,
+			"compileGroupIndex" : 0,
+			"path" : "src/wallet/sqlite.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

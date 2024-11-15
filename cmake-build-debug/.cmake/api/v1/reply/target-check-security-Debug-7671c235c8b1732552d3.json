@@ -1,0 +1,101 @@
+{
+	"backtrace" : 2,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target",
+			"add_maintenance_targets"
+		],
+		"files" : 
+		[
+			"cmake/module/Maintenance.cmake",
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 578,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 58,
+				"parent" : 1
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin-wallet::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoind::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin-cli::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin-tx::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "bitcoin-util::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "test_bitcoin::@b7fcbc08bf8df37e9c1b"
+		}
+	],
+	"id" : "check-security::@6890427a1f51a3e7e1df",
+	"name" : "check-security",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 2,
+			"isGenerated" : true,
+			"path" : "cmake-build-debug/CMakeFiles/check-security",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "cmake-build-debug/CMakeFiles/check-security.rule",
+			"sourceGroupIndex" : 1
+		}
+	],
+	"type" : "UTILITY"
+}

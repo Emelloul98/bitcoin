@@ -1,0 +1,605 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1,
+						2,
+						3
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						16,
+						17,
+						18,
+						19,
+						20,
+						25,
+						26,
+						27,
+						32
+					]
+				},
+				{
+					"build" : "test",
+					"jsonFile" : "directory-test-Debug-451c0598f41488bb20b9.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "test"
+				},
+				{
+					"build" : "doc",
+					"jsonFile" : "directory-doc-Debug-00ee67dbe228fd23eb89.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "doc",
+					"targetIndexes" : 
+					[
+						22
+					]
+				},
+				{
+					"build" : "src",
+					"childIndexes" : 
+					[
+						4,
+						5,
+						6,
+						7,
+						9,
+						10,
+						11
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-src-Debug-6a947a8ff31bcab7bed7.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "src",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						12,
+						15,
+						24
+					]
+				},
+				{
+					"build" : "src/crypto",
+					"jsonFile" : "directory-src.crypto-Debug-a4bf8f9fb4b6e1e02bd2.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 0,
+					"source" : "src/crypto",
+					"targetIndexes" : 
+					[
+						8,
+						9,
+						10,
+						11
+					]
+				},
+				{
+					"build" : "src/univalue",
+					"jsonFile" : "directory-src.univalue-Debug-0cfe69362f6dfda1861b.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 0,
+					"source" : "src/univalue",
+					"targetIndexes" : 
+					[
+						29,
+						36,
+						37
+					]
+				},
+				{
+					"build" : "src/util",
+					"jsonFile" : "directory-src.util-Debug-86cf09791d51c42f0db6.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 0,
+					"source" : "src/util",
+					"targetIndexes" : 
+					[
+						13
+					]
+				},
+				{
+					"build" : "src/secp256k1",
+					"childIndexes" : 
+					[
+						8
+					],
+					"jsonFile" : "directory-src.secp256k1-Debug-196c31b89804e2adece5.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 1,
+					"source" : "src/secp256k1"
+				},
+				{
+					"build" : "src/secp256k1/src",
+					"jsonFile" : "directory-src.secp256k1.src-Debug-74559fbac53389360fe1.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 7,
+					"projectIndex" : 1,
+					"source" : "src/secp256k1/src",
+					"targetIndexes" : 
+					[
+						21,
+						23,
+						28,
+						30,
+						31,
+						35
+					]
+				},
+				{
+					"build" : "src/wallet",
+					"jsonFile" : "directory-src.wallet-Debug-11b66c4e8f1fc2fd3828.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 0,
+					"source" : "src/wallet",
+					"targetIndexes" : 
+					[
+						14
+					]
+				},
+				{
+					"build" : "src/test/util",
+					"jsonFile" : "directory-src.test.util-Debug-352eb3cd4357ca00fa14.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 0,
+					"source" : "src/test/util",
+					"targetIndexes" : 
+					[
+						34
+					]
+				},
+				{
+					"build" : "src/test",
+					"childIndexes" : 
+					[
+						12
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-src.test-Debug-827a3b28ac438630fe37.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 0,
+					"source" : "src/test",
+					"targetIndexes" : 
+					[
+						33
+					]
+				},
+				{
+					"build" : "src/test/wallet",
+					"jsonFile" : "directory-src.test.wallet-Debug-4aeeaf44abcb8e695960.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.22"
+					},
+					"parentIndex" : 11,
+					"projectIndex" : 0,
+					"source" : "src/wallet/test"
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						9,
+						10,
+						11,
+						12
+					],
+					"name" : "BitcoinCore",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19,
+						20,
+						22,
+						24,
+						25,
+						26,
+						27,
+						29,
+						32,
+						33,
+						34,
+						36,
+						37
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						7,
+						8
+					],
+					"name" : "libsecp256k1",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						21,
+						23,
+						28,
+						30,
+						31,
+						35
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 3,
+					"id" : "bitcoin-cli::@145eef247bfb46b6828c",
+					"jsonFile" : "target-bitcoin-cli-Debug-bce9a2745d9814146ddd.json",
+					"name" : "bitcoin-cli",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "bitcoin-tx::@145eef247bfb46b6828c",
+					"jsonFile" : "target-bitcoin-tx-Debug-bfbb697115a20081d502.json",
+					"name" : "bitcoin-tx",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "bitcoin-util::@145eef247bfb46b6828c",
+					"jsonFile" : "target-bitcoin-util-Debug-0e4024d41e9ca1026f8d.json",
+					"name" : "bitcoin-util",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "bitcoin-wallet::@145eef247bfb46b6828c",
+					"jsonFile" : "target-bitcoin-wallet-Debug-2df3719fc629dcb76a37.json",
+					"name" : "bitcoin-wallet",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "bitcoin_cli::@145eef247bfb46b6828c",
+					"jsonFile" : "target-bitcoin_cli-Debug-a524a867dfdf7dd50673.json",
+					"name" : "bitcoin_cli",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "bitcoin_clientversion::@145eef247bfb46b6828c",
+					"jsonFile" : "target-bitcoin_clientversion-Debug-4d653776c30c67b792ee.json",
+					"name" : "bitcoin_clientversion",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "bitcoin_common::@145eef247bfb46b6828c",
+					"jsonFile" : "target-bitcoin_common-Debug-416e1e7caea361348e58.json",
+					"name" : "bitcoin_common",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "bitcoin_consensus::@145eef247bfb46b6828c",
+					"jsonFile" : "target-bitcoin_consensus-Debug-aa83f93e8685a19214e9.json",
+					"name" : "bitcoin_consensus",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "bitcoin_crypto::@f9c2fa495612d34facca",
+					"jsonFile" : "target-bitcoin_crypto-Debug-97197ebfff813c8462f1.json",
+					"name" : "bitcoin_crypto",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "bitcoin_crypto_avx2::@f9c2fa495612d34facca",
+					"jsonFile" : "target-bitcoin_crypto_avx2-Debug-4c85ccc701ea83635994.json",
+					"name" : "bitcoin_crypto_avx2",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "bitcoin_crypto_sse41::@f9c2fa495612d34facca",
+					"jsonFile" : "target-bitcoin_crypto_sse41-Debug-8db80869e475898bbee5.json",
+					"name" : "bitcoin_crypto_sse41",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "bitcoin_crypto_x86_shani::@f9c2fa495612d34facca",
+					"jsonFile" : "target-bitcoin_crypto_x86_shani-Debug-ae5131a4253968b79b62.json",
+					"name" : "bitcoin_crypto_x86_shani",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "bitcoin_node::@145eef247bfb46b6828c",
+					"jsonFile" : "target-bitcoin_node-Debug-348659f6b95e9b98cc36.json",
+					"name" : "bitcoin_node",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 6,
+					"id" : "bitcoin_util::@6bc12a100e338ba65b7b",
+					"jsonFile" : "target-bitcoin_util-Debug-e8da88e92ec65c107477.json",
+					"name" : "bitcoin_util",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 9,
+					"id" : "bitcoin_wallet::@3093704cd61b9b7b8c7a",
+					"jsonFile" : "target-bitcoin_wallet-Debug-cdac648a222f2b19b41d.json",
+					"name" : "bitcoin_wallet",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "bitcoind::@145eef247bfb46b6828c",
+					"jsonFile" : "target-bitcoind-Debug-d16c91ea90052ad4cfad.json",
+					"name" : "bitcoind",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "check-security::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-check-security-Debug-7671c235c8b1732552d3.json",
+					"name" : "check-security",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "check-symbols::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-check-symbols-Debug-6c6fd6b073ec03a93d75.json",
+					"name" : "check-symbols",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "check_loose_linked_libraries::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-check_loose_linked_libraries-Debug-61a7a7e3b4157ea3e697.json",
+					"name" : "check_loose_linked_libraries",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "crc32c::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-crc32c-Debug-ef9d7ab46d5193eaba2b.json",
+					"name" : "crc32c",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "crc32c_sse42::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-crc32c_sse42-Debug-9e749faf67fdeb85d839.json",
+					"name" : "crc32c_sse42",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "ctime_tests::@b777a971afae55932f40",
+					"jsonFile" : "target-ctime_tests-Debug-fa6ace9bb571e449e821.json",
+					"name" : "ctime_tests",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "docs::@c2466c91de71b9c692d9",
+					"jsonFile" : "target-docs-Debug-a67df3fc906bd0beac59.json",
+					"name" : "docs",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "exhaustive_tests::@b777a971afae55932f40",
+					"jsonFile" : "target-exhaustive_tests-Debug-0c2e88c33768cec9502f.json",
+					"name" : "exhaustive_tests",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "generate_build_info::@145eef247bfb46b6828c",
+					"jsonFile" : "target-generate_build_info-Debug-b1b618305518dc76d18f.json",
+					"name" : "generate_build_info",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "leveldb::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-leveldb-Debug-70b28a84b64af3a1df7e.json",
+					"name" : "leveldb",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "minisketch::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-minisketch-Debug-2c4a6a130e8a1979d406.json",
+					"name" : "minisketch",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "minisketch_clmul::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-minisketch_clmul-Debug-84d1229b15245de9cde2.json",
+					"name" : "minisketch_clmul",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "noverify_tests::@b777a971afae55932f40",
+					"jsonFile" : "target-noverify_tests-Debug-58cb820945b6de659124.json",
+					"name" : "noverify_tests",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "object::@e2841633399f66c6a649",
+					"jsonFile" : "target-object-Debug-c049552146e04bd2c5ba.json",
+					"name" : "object",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "secp256k1::@b777a971afae55932f40",
+					"jsonFile" : "target-secp256k1-Debug-8411875eacd72d2b5201.json",
+					"name" : "secp256k1",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "secp256k1_precomputed::@b777a971afae55932f40",
+					"jsonFile" : "target-secp256k1_precomputed-Debug-38a77f640ccaeac1a8f0.json",
+					"name" : "secp256k1_precomputed",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "test-security-check::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-test-security-check-Debug-cb7cae0e584e1ef2f7ac.json",
+					"name" : "test-security-check",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 11,
+					"id" : "test_bitcoin::@b7fcbc08bf8df37e9c1b",
+					"jsonFile" : "target-test_bitcoin-Debug-f11648d82daf5dffdefc.json",
+					"name" : "test_bitcoin",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 10,
+					"id" : "test_util::@d9813be02635c9bce1f0",
+					"jsonFile" : "target-test_util-Debug-f4fd4d87bb03543dde51.json",
+					"name" : "test_util",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "tests::@b777a971afae55932f40",
+					"jsonFile" : "target-tests-Debug-daa30ad1ccf7ac7fb033.json",
+					"name" : "tests",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "unitester::@e2841633399f66c6a649",
+					"jsonFile" : "target-unitester-Debug-c422a9d23eea67f9959e.json",
+					"name" : "unitester",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 5,
+					"id" : "univalue::@e2841633399f66c6a649",
+					"jsonFile" : "target-univalue-Debug-ce10df85c3790d2fce24.json",
+					"name" : "univalue",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/student/CLionProjects/projects/bitcoin/cmake-build-debug",
+		"source" : "/home/student/CLionProjects/projects/bitcoin"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

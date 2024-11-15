@@ -1,0 +1,1 @@
+/home/student/CLionProjects/projects/bitcoin/test/functional/wallet_avoid_mixing_output_types.py

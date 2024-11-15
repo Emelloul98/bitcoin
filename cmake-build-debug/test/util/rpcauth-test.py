@@ -1,0 +1,1 @@
+/home/student/CLionProjects/projects/bitcoin/test/util/rpcauth-test.py

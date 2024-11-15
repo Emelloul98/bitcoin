@@ -1,0 +1,603 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "libleveldb.a"
+		}
+	],
+	"backtrace" : 3,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"include",
+			"target_link_libraries",
+			"target_compile_definitions",
+			"target_include_directories"
+		],
+		"files" : 
+		[
+			"cmake/leveldb.cmake",
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 570,
+				"parent" : 0
+			},
+			{
+				"file" : 0,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 12,
+				"parent" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 97,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 55,
+				"parent" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 75,
+				"parent" : 2
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-O0 -ftrapv -g3 -std=c++20 -fPIC -fdiagnostics-color=always"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-fno-extended-identifiers"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-ffile-prefix-map=/home/student/CLionProjects/projects/bitcoin/src=."
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-fstack-reuse=none"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wextra"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wformat"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wformat-security"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wvla"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wredundant-decls"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wdate-time"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wduplicated-branches"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wduplicated-cond"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wlogical-op"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Woverloaded-virtual"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wsuggest-override"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wimplicit-fallthrough"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wunreachable-code"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wundef"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wno-unused-parameter"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wstack-protector"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-fstack-protector-all"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-fcf-protection=full"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-fstack-clash-protection"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wno-conditional-uninitialized"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-Wno-suggest-override"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 4,
+					"define" : "ABORT_ON_FAILED_ASSUME"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "DEBUG"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "DEBUG_LOCKCONTENTION"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "DEBUG_LOCKORDER"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "FALLTHROUGH_INTENDED=[[fallthrough]]"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "HAVE_CRC32C=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "HAVE_FDATASYNC=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "HAVE_FULLFSYNC=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "HAVE_O_CLOEXEC=1"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "HAVE_SNAPPY=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "LEVELDB_IS_BIG_ENDIAN=0"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "LEVELDB_PLATFORM_POSIX"
+				},
+				{
+					"backtrace" : 4,
+					"define" : "RPC_DOC_CHECK"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 6,
+					"path" : "/home/student/CLionProjects/projects/bitcoin/src/leveldb"
+				},
+				{
+					"backtrace" : 6,
+					"path" : "/home/student/CLionProjects/projects/bitcoin/src/leveldb/include"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/home/student/CLionProjects/projects/bitcoin/src/crc32c/include"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					3
+				],
+				"standard" : "20"
+			},
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36,
+				37,
+				38
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 4,
+			"id" : "crc32c::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 4,
+			"id" : "crc32c_sse42::@6890427a1f51a3e7e1df"
+		}
+	],
+	"id" : "leveldb::@6890427a1f51a3e7e1df",
+	"name" : "leveldb",
+	"nameOnDisk" : "libleveldb.a",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36,
+				37,
+				38
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/builder.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/c.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/db_impl.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/db_iter.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/dbformat.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/dumpfile.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/filename.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/log_reader.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/log_writer.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/memtable.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/repair.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/table_cache.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/version_edit.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/version_set.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/db/write_batch.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/table/block.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/table/block_builder.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/table/filter_block.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/table/format.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/table/iterator.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/table/merger.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/table/table.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/table/table_builder.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/table/two_level_iterator.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/arena.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/bloom.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/cache.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/coding.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/comparator.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/crc32c.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/env.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/env_posix.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/filter_policy.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/hash.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/histogram.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/logging.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/options.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/util/status.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/leveldb/helpers/memenv/memenv.cc",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

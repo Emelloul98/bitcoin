@@ -1,0 +1,679 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "src/bitcoind"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"install",
+			"target_link_libraries",
+			"include",
+			"set_property",
+			"_pkg_create_imp_target",
+			"_pkg_recalculate",
+			"_pkg_check_modules_internal",
+			"pkg_check_modules",
+			"find_package",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"src/CMakeLists.txt",
+			"cmake/leveldb.cmake",
+			"CMakeLists.txt",
+			"cmake/crc32c.cmake",
+			"/snap/clion/296/bin/cmake/linux/x64/share/cmake-3.29/Modules/FindPkgConfig.cmake",
+			"cmake/module/FindLibevent.cmake",
+			"src/util/CMakeLists.txt",
+			"src/crypto/CMakeLists.txt",
+			"src/wallet/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 308,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 447,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 313,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 289,
+				"parent" : 0
+			},
+			{
+				"file" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 2,
+				"line" : 570,
+				"parent" : 5
+			},
+			{
+				"file" : 1,
+				"parent" : 6
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 97,
+				"parent" : 7
+			},
+			{
+				"command" : 3,
+				"file" : 2,
+				"line" : 569,
+				"parent" : 5
+			},
+			{
+				"file" : 3,
+				"parent" : 9
+			},
+			{
+				"command" : 2,
+				"file" : 3,
+				"line" : 112,
+				"parent" : 10
+			},
+			{
+				"command" : 9,
+				"file" : 2,
+				"line" : 377,
+				"parent" : 5
+			},
+			{
+				"file" : 5,
+				"parent" : 12
+			},
+			{
+				"command" : 8,
+				"file" : 5,
+				"line" : 66,
+				"parent" : 13
+			},
+			{
+				"command" : 7,
+				"file" : 4,
+				"line" : 862,
+				"parent" : 14
+			},
+			{
+				"command" : 6,
+				"file" : 4,
+				"line" : 690,
+				"parent" : 15
+			},
+			{
+				"command" : 5,
+				"file" : 4,
+				"line" : 354,
+				"parent" : 16
+			},
+			{
+				"command" : 4,
+				"file" : 4,
+				"line" : 335,
+				"parent" : 17
+			},
+			{
+				"command" : 8,
+				"file" : 5,
+				"line" : 66,
+				"parent" : 13
+			},
+			{
+				"command" : 7,
+				"file" : 4,
+				"line" : 862,
+				"parent" : 19
+			},
+			{
+				"command" : 6,
+				"file" : 4,
+				"line" : 690,
+				"parent" : 20
+			},
+			{
+				"command" : 5,
+				"file" : 4,
+				"line" : 354,
+				"parent" : 21
+			},
+			{
+				"command" : 4,
+				"file" : 4,
+				"line" : 335,
+				"parent" : 22
+			},
+			{
+				"command" : 8,
+				"file" : 5,
+				"line" : 66,
+				"parent" : 13
+			},
+			{
+				"command" : 7,
+				"file" : 4,
+				"line" : 862,
+				"parent" : 24
+			},
+			{
+				"command" : 6,
+				"file" : 4,
+				"line" : 690,
+				"parent" : 25
+			},
+			{
+				"command" : 5,
+				"file" : 4,
+				"line" : 354,
+				"parent" : 26
+			},
+			{
+				"command" : 4,
+				"file" : 4,
+				"line" : 335,
+				"parent" : 27
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 156,
+				"parent" : 0
+			},
+			{
+				"file" : 6
+			},
+			{
+				"command" : 2,
+				"file" : 6,
+				"line" : 39,
+				"parent" : 30
+			},
+			{
+				"file" : 7
+			},
+			{
+				"command" : 2,
+				"file" : 7,
+				"line" : 37,
+				"parent" : 32
+			},
+			{
+				"command" : 2,
+				"file" : 7,
+				"line" : 47,
+				"parent" : 32
+			},
+			{
+				"command" : 2,
+				"file" : 7,
+				"line" : 57,
+				"parent" : 32
+			},
+			{
+				"file" : 8
+			},
+			{
+				"command" : 2,
+				"file" : 8,
+				"line" : 50,
+				"parent" : 36
+			},
+			{
+				"command" : 10,
+				"file" : 0,
+				"line" : 9,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-O0 -ftrapv -g3 -std=c++20 -fPIE -fdiagnostics-color=always"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fno-extended-identifiers"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-ffile-prefix-map=/home/student/CLionProjects/projects/bitcoin/src=."
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fstack-reuse=none"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wextra"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wformat"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wformat-security"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wvla"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wredundant-decls"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wdate-time"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wduplicated-branches"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wduplicated-cond"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wlogical-op"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Woverloaded-virtual"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wsuggest-override"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wimplicit-fallthrough"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wunreachable-code"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wundef"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wno-unused-parameter"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-Wstack-protector"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fstack-protector-all"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fcf-protection=full"
+				},
+				{
+					"backtrace" : 3,
+					"fragment" : "-fstack-clash-protection"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 3,
+					"define" : "ABORT_ON_FAILED_ASSUME"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "DEBUG"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "DEBUG_LOCKCONTENTION"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "DEBUG_LOCKORDER"
+				},
+				{
+					"backtrace" : 3,
+					"define" : "RPC_DOC_CHECK"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 38,
+					"path" : "/home/student/CLionProjects/projects/bitcoin/cmake-build-debug/src"
+				},
+				{
+					"backtrace" : 38,
+					"path" : "/home/student/CLionProjects/projects/bitcoin/src"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					1
+				],
+				"standard" : "20"
+			},
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 3,
+			"id" : "crc32c::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "crc32c_sse42::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "leveldb::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "minisketch_clmul::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "minisketch::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bitcoin_clientversion::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bitcoin_consensus::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bitcoin_common::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bitcoin_node::@145eef247bfb46b6828c"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bitcoin_crypto::@f9c2fa495612d34facca"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bitcoin_crypto_sse41::@f9c2fa495612d34facca"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bitcoin_crypto_avx2::@f9c2fa495612d34facca"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bitcoin_crypto_x86_shani::@f9c2fa495612d34facca"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "univalue::@e2841633399f66c6a649"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bitcoin_util::@6bc12a100e338ba65b7b"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "secp256k1::@b777a971afae55932f40"
+		},
+		{
+			"backtrace" : 3,
+			"id" : "bitcoin_wallet::@3093704cd61b9b7b8c7a"
+		}
+	],
+	"id" : "bitcoind::@145eef247bfb46b6828c",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 2,
+				"path" : "bin"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "/usr/local"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-O0 -ftrapv -g3",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-fstack-reuse=none",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-fstack-protector-all",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-fcf-protection=full",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-fstack-clash-protection",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-Wl,-z,relro",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-Wl,-z,now",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "-Wl,-z,separate-code",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-fPIE -pie",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "src/libbitcoin_node.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 3,
+				"fragment" : "src/wallet/libbitcoin_wallet.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "libleveldb.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 8,
+				"fragment" : "libcrc32c.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 11,
+				"fragment" : "libcrc32c_sse42.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "libminisketch.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 18,
+				"fragment" : "/usr/lib/x86_64-linux-gnu/libevent_core.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 23,
+				"fragment" : "/usr/lib/x86_64-linux-gnu/libevent_extra.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 28,
+				"fragment" : "/usr/lib/x86_64-linux-gnu/libevent_pthreads.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 28,
+				"fragment" : "/usr/lib/x86_64-linux-gnu/libevent.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "src/libbitcoin_common.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "src/util/libbitcoin_util.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 29,
+				"fragment" : "src/libbitcoin_consensus.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 31,
+				"fragment" : "src/crypto/libbitcoin_crypto.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 33,
+				"fragment" : "src/crypto/libbitcoin_crypto_sse41.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 34,
+				"fragment" : "src/crypto/libbitcoin_crypto_avx2.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 35,
+				"fragment" : "src/crypto/libbitcoin_crypto_x86_shani.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 29,
+				"fragment" : "src/secp256k1/lib/libsecp256k1.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "src/univalue/libunivalue.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 37,
+				"fragment" : "/usr/lib/x86_64-linux-gnu/libsqlite3.so",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "bitcoind",
+	"nameOnDisk" : "bitcoind",
+	"paths" : 
+	{
+		"build" : "src",
+		"source" : "src"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/bitcoind.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "src/init/bitcoind.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "EXECUTABLE"
+}

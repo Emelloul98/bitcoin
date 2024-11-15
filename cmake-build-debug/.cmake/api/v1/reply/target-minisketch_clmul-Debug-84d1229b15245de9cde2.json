@@ -1,0 +1,324 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "CMakeFiles/minisketch_clmul.dir/./src/minisketch/src/fields/clmul_1byte.cpp.o"
+		},
+		{
+			"path" : "CMakeFiles/minisketch_clmul.dir/./src/minisketch/src/fields/clmul_2bytes.cpp.o"
+		},
+		{
+			"path" : "CMakeFiles/minisketch_clmul.dir/./src/minisketch/src/fields/clmul_3bytes.cpp.o"
+		},
+		{
+			"path" : "CMakeFiles/minisketch_clmul.dir/./src/minisketch/src/fields/clmul_4bytes.cpp.o"
+		},
+		{
+			"path" : "CMakeFiles/minisketch_clmul.dir/./src/minisketch/src/fields/clmul_5bytes.cpp.o"
+		},
+		{
+			"path" : "CMakeFiles/minisketch_clmul.dir/./src/minisketch/src/fields/clmul_6bytes.cpp.o"
+		},
+		{
+			"path" : "CMakeFiles/minisketch_clmul.dir/./src/minisketch/src/fields/clmul_7bytes.cpp.o"
+		},
+		{
+			"path" : "CMakeFiles/minisketch_clmul.dir/./src/minisketch/src/fields/clmul_8bytes.cpp.o"
+		}
+	],
+	"backtrace" : 3,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"include",
+			"target_compile_options",
+			"target_link_libraries",
+			"target_compile_definitions"
+		],
+		"files" : 
+		[
+			"cmake/minisketch.cmake",
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 571,
+				"parent" : 0
+			},
+			{
+				"file" : 0,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 43,
+				"parent" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 54,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 55,
+				"parent" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 53,
+				"parent" : 2
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-O0 -ftrapv -g3 -std=c++20 -fPIC -fdiagnostics-color=always"
+				},
+				{
+					"backtrace" : 4,
+					"fragment" : "-mpclmul"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-fno-extended-identifiers"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-ffile-prefix-map=/home/student/CLionProjects/projects/bitcoin/src=."
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-fstack-reuse=none"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wextra"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wformat"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wformat-security"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wvla"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wredundant-decls"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wdate-time"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wduplicated-branches"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wduplicated-cond"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wlogical-op"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Woverloaded-virtual"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wsuggest-override"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wimplicit-fallthrough"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wunreachable-code"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wundef"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wno-unused-parameter"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-Wstack-protector"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-fstack-protector-all"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-fcf-protection=full"
+				},
+				{
+					"backtrace" : 5,
+					"fragment" : "-fstack-clash-protection"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 5,
+					"define" : "ABORT_ON_FAILED_ASSUME"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DEBUG"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DEBUG_LOCKCONTENTION"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DEBUG_LOCKORDER"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "DISABLE_DEFAULT_FIELDS"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "ENABLE_FIELD_32"
+				},
+				{
+					"backtrace" : 6,
+					"define" : "HAVE_CLMUL"
+				},
+				{
+					"backtrace" : 5,
+					"define" : "RPC_DOC_CHECK"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					3
+				],
+				"standard" : "20"
+			},
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7
+			]
+		}
+	],
+	"id" : "minisketch_clmul::@6890427a1f51a3e7e1df",
+	"name" : "minisketch_clmul",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/minisketch/src/fields/clmul_1byte.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/minisketch/src/fields/clmul_2bytes.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/minisketch/src/fields/clmul_3bytes.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/minisketch/src/fields/clmul_4bytes.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/minisketch/src/fields/clmul_5bytes.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/minisketch/src/fields/clmul_6bytes.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/minisketch/src/fields/clmul_7bytes.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 0,
+			"path" : "src/minisketch/src/fields/clmul_8bytes.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "OBJECT_LIBRARY"
+}
