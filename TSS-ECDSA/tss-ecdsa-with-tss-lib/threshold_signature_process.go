@@ -52,3 +52,24 @@ func main() {
 		saveKeyToFile(fmt.Sprintf("party%d_key.txt", i+1), keygenSaveData[i])
 	}
 }
+func main() {
+	// חלק ראשון
+	// ...
+
+	// הודעה לחתימה
+	msg := new(big.Int).SetInt64(12345)
+	signingOutChs := make([]chan tss.Message, len(parties))
+	signingEndChs := make([]chan *common.SignatureData, len(parties))
+	for i := 0; i < len(parties); i++ {
+		params := tss.NewParameters(tss.Edwards(), tss.NewPeerContext(parties), parties[i], len(parties), threshold)
+		party := signing.NewLocalParty(msg, params, *keygenSaveData[i], signingOutChs[i], signingEndChs[i])
+		go func(p tss.Party) {
+			if err := p.Start(); err != nil {
+				fmt.Println("Error:", err)
+				return
+			}
+		}(party)
+	}
+	signatureData := <-signingEndChs
+	fmt.Println("Signed Message:", signatureData)
+}
