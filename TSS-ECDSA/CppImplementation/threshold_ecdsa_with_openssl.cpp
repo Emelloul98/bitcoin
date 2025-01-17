@@ -73,12 +73,65 @@ void createDistributedKeys(int numParticipants, int threshold) {
     BN_free(groupPrivateKey);
 }
 
+// Function to sign a message using partial ECDSA signatures
+string signMessage(const string& message, const vector<string>& keyFiles) {
+    vector<BIGNUM*> partialSignatures;
+
+    // Hash the message using SHA-256
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256((unsigned char*)message.c_str(), message.size(), hash);
+
+    for (const string& file : keyFiles) {
+        ifstream keyFile(file);
+        if (keyFile.is_open()) {
+            string hexKey;
+            keyFile >> hexKey;
+            BIGNUM* partialKey = BN_new();
+            BN_hex2bn(&partialKey, hexKey.c_str());
+
+            // Create a partial signature (simplified for demonstration purposes)
+            BIGNUM* partialSig = BN_new();
+            BN_bin2bn(hash, SHA256_DIGEST_LENGTH, partialSig);
+            BN_add(partialSig, partialSig, partialKey);
+            partialSignatures.push_back(partialSig);
+
+            keyFile.close();
+        } else {
+            cerr << "Unable to open key file: " << file << endl;
+        }
+    }
+
+    // Combine partial signatures to form the final signature
+    BIGNUM* finalSignature = BN_new();
+    BN_zero(finalSignature);
+
+    for (auto sig : partialSignatures) {
+        BN_add(finalSignature, finalSignature, sig);
+        BN_free(sig);
+    }
+
+    // Convert the final signature to a string
+    char* hexSig = BN_bn2hex(finalSignature);
+    string result(hexSig);
+    OPENSSL_free(hexSig);
+    BN_free(finalSignature);
+
+    return result;
+}
+
 int main() {
     int numParticipants = 5;
     int threshold = 3;
 
     // Create distributed keys
     createDistributedKeys(numParticipants, threshold);
+    // Sign message
+    string message = "Hello, Threshold ECDSA!";
+    vector<string> keyFiles = {"participant_1.key", "participant_2.key", "participant_3.key"};
+    string signature = signMessage(message, keyFiles);
+    cout << "Signature: " << signature << endl;
+
+    cout << global_pub_key << endl;
     EC_KEY_free(global_pub_key);
 
     return 0;
