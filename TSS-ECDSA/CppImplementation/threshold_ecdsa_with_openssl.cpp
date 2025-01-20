@@ -119,12 +119,32 @@ string signMessage(const string& message, const vector<string>& keyFiles) {
     return result;
 }
 
+bool decipherSignature(EC_KEY *public_key, const unsigned char *msg, size_t msg_len, const string& signature) {
+    // Hash message
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256(msg, msg_len, hash);
+    
+    // Parse signature
+    BIGNUM *r = BN_new(), *s = BN_new();
+    BN_hex2bn(&r, signature.substr(0, 64).c_str());
+    BN_hex2bn(&s, signature.substr(64).c_str());
+    ECDSA_SIG* sig = ECDSA_SIG_new();
+    ECDSA_SIG_set0(sig, r, s);
+    
+    // Verify using public key
+    int result = ECDSA_do_verify(hash, SHA256_DIGEST_LENGTH, sig, public_key);
+    
+    ECDSA_SIG_free(sig);
+    return result == 1;
+}
+
 int main() {
     int numParticipants = 5;
     int threshold = 3;
 
     // Create distributed keys
     createDistributedKeys(numParticipants, threshold);
+
     // Sign message
     string message = "Hello, Threshold ECDSA!";
     vector<string> keyFiles = {"participant_1.key", "participant_2.key", "participant_3.key"};
@@ -132,8 +152,14 @@ int main() {
     cout << "Signature: " << signature << endl;
 
     cout << global_pub_key << endl;
+
+    bool valid = decipherSignature(global_pub_key, (unsigned char*)message.c_str(), message.length(), signature);
+    cout << "Signature valid: " << (valid ? "true" : "false") << endl;
     EC_KEY_free(global_pub_key);
+
+    
 
     return 0;
 }
+
 
