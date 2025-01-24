@@ -24,34 +24,48 @@ const (
 	testParticipants = 5
 	testThreshold    = 3
 )
-func main() {
-	ids := []string{"party1", "party2", "party3"}
-	threshold := 2
-	parties := tss.SortPartyIDs(makePartyIDs(ids))
-	partyIDMap := make(map[string]*tss.PartyID)
-	for _, id := range parties {
-		partyIDMap[id.Id] = id
-	}
-	preParams, _ := keygen.GeneratePreParams(1 * time.Minute)
-	keygenOutChs := make([]chan tss.Message, len(parties))
-	keygenEndChs := make([]chan *keygen.LocalPartySaveData, len(parties))
-	for i := 0; i < len(parties); i++ {
-		params := tss.NewParameters(tss.Edwards(), tss.NewPeerContext(parties), parties[i], len(parties), threshold)
-		party := keygen.NewLocalParty(params, keygenOutChs[i], keygenEndChs[i], preParams)
-		go func(p tss.Party) {
-			if err := p.Start(); err != nil {
-				fmt.Println("Error:", err)
-				return
-			}
-		}(party)
-	}
-	keygenSaveData := make([]*keygen.LocalPartySaveData, len(parties))
-	for i := 0; i < len(parties); i++ {
-		keygenSaveData[i] = <-keygenEndChs[i]
-		saveKeyToFile(fmt.Sprintf("party%d_key.txt", i+1), keygenSaveData[i])
+func setUp(level string) {
+	if err := log.SetLogLevel("tss-lib", level); err != nil {
+		panic(err)
 	}
 }
+func main() {
+	setUp("info")
+	threshold := testThreshold
 
+	// PHASE: load keygen fixtures
+	keys, signPIDs, err := keygen.LoadKeygenTestFixturesRandomSet(testThreshold+1, testParticipants)
+
+  pubKeyHex := publicKeyToHexCompressed(keys[0].ECDSAPub.ToECDSAPubKey())
+  addrHex, _ := compressedPubKeyToAddress(pubKeyHex)
+  fmt.Printf("Pub Key (x, y): %s %s\n", keys[0].ECDSAPub.X(), keys[0].ECDSAPub.Y())
+  fmt.Printf("Pub Key (hex, compressed): %s\n", pubKeyHex)
+  fmt.Printf("Address (hex): %s\n", addrHex)
+
+	// PHASE: signing
+	// use a shuffled selection of the list of parties for this test
+	p2pCtx := tss.NewPeerContext(signPIDs)
+	parties := make([]*LocalParty, 0, len(signPIDs))
+
+	errCh := make(chan *tss.Error, len(signPIDs))
+	outCh := make(chan tss.Message, len(signPIDs))
+	endCh := make(chan *common.SignatureData, len(signPIDs))
+
+	updater := test.SharedPartyUpdater
+  msgData, _ := hex.DecodeString("f7ab4253b131f70e698051aa621d1ae09665500ef4580d0d2decbc0d4b863671") // TODO: Put tx sighash here
+	// init the parties
+	for i := 0; i < len(signPIDs); i++ {
+		params := tss.NewParameters(tss.S256(), p2pCtx, signPIDs[i], len(signPIDs), threshold)
+		P := NewLocalParty(new(big.Int).SetBytes(msgData), params, keys[i], outCh, endCh, len(msgData)).(*LocalParty)
+		parties = append(parties, P)
+		go func(P *LocalParty) {
+			if err := P.Start(); err != nil {
+				errCh <- err
+			}
+		}(P)
+	}
+
+	var ended int32
 
 
 
