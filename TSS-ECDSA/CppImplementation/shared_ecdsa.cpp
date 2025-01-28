@@ -103,3 +103,38 @@ std::vector<KeyShare> create_threshold_ecdsa(int n, int t) {
     
     return shares;
 }
+
+
+// Helper function to clean up shares
+void cleanup_shares(std::vector<KeyShare>& shares) {
+    for(auto& share : shares) {
+        BN_free(share.x);
+        BN_free(share.y);
+    }
+    if(global_public_key) {
+        EC_POINT_free(global_public_key);
+    }
+    if(group) {
+        EC_GROUP_free(group);
+    }
+}
+
+BIGNUM* generate_deterministic_k(const std::string& message, const BIGNUM* private_key) {
+    EVP_MD_CTX* md_ctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(md_ctx, EVP_sha256(), NULL);
+    EVP_DigestUpdate(md_ctx, message.c_str(), message.length());
+    
+    unsigned char hash[32];
+    unsigned int hash_len;
+    EVP_DigestFinal_ex(md_ctx, hash, &hash_len);
+    EVP_MD_CTX_free(md_ctx);
+    
+    BIGNUM* k = BN_new();
+    BN_bin2bn(hash, hash_len, k);
+    
+    BN_CTX* ctx = BN_CTX_new();
+    BN_mod(k, k, EC_GROUP_get0_order(group), ctx);
+    BN_CTX_free(ctx);
+    
+    return k;
+}
