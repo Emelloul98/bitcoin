@@ -138,3 +138,68 @@ BIGNUM* generate_deterministic_k(const std::string& message, const BIGNUM* priva
     
     return k;
 }
+
+ECDSA_SIG* partial_sign(const std::string& file_path, const std::string& message, const BIGNUM* k = nullptr) {
+    std::ifstream file(file_path);
+    if (!file.is_open()) {
+        throw std::runtime_error("Cannot open share file");
+    }
+
+    std::string x_str, y_str;
+    std::getline(file, x_str);
+    std::getline(file, y_str);
+    file.close();
+
+
+    BIGNUM* x = nullptr;
+    BIGNUM* share = nullptr;
+    BN_hex2bn(&x, x_str.c_str());
+    BN_hex2bn(&share, y_str.c_str());
+
+    unsigned char hash[32];
+    EVP_MD_CTX* md_ctx = EVP_MD_CTX_new();
+    EVP_DigestInit_ex(md_ctx, EVP_sha256(), NULL);
+    EVP_DigestUpdate(md_ctx, message.c_str(), message.length());
+    unsigned int hash_len;
+    EVP_DigestFinal_ex(md_ctx, hash, &hash_len);
+    EVP_MD_CTX_free(md_ctx);
+
+    BIGNUM* k_owned = nullptr;
+    if (!k) {
+        k_owned = generate_deterministic_k(message, share);
+        k = k_owned;
+    }
+    
+    ECDSA_SIG* sig = ECDSA_SIG_new();
+    BIGNUM* r = BN_new();
+    BIGNUM* s = BN_new();
+    
+    EC_POINT* R = EC_POINT_new(group);
+    BN_CTX* ctx = BN_CTX_new();
+    
+    EC_POINT_mul(group, R, k, nullptr, nullptr, ctx);
+    EC_POINT_get_affine_coordinates(group, R, r, nullptr, ctx);
+    
+    BIGNUM* k_inv = BN_new();
+    BN_mod_inverse(k_inv, k, EC_GROUP_get0_order(group), ctx);
+    
+    BIGNUM* hash_bn = BN_bin2bn(hash, hash_len, nullptr);
+    BIGNUM* temp = BN_new();
+    
+    BN_mod_mul(temp, r, share, EC_GROUP_get0_order(group), ctx);
+    BN_mod_add(temp, hash_bn, temp, EC_GROUP_get0_order(group), ctx);
+    BN_mod_mul(s, k_inv, temp, EC_GROUP_get0_order(group), ctx);
+    
+    ECDSA_SIG_set0(sig, r, s);
+    
+    if (k_owned) BN_free(k_owned);
+    BN_free(x);
+    BN_free(share);
+    BN_free(k_inv);
+    BN_free(hash_bn);
+    BN_free(temp);
+    EC_POINT_free(R);
+    BN_CTX_free(ctx);
+    
+    return sig;
+}
