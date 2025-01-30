@@ -142,3 +142,16 @@ func fillBytes(x *big.Int, buf []byte) []byte {
 	}
 	return buf
 }
+// Serializes a public key into compressed form (0x02/0x03 + x)
+func publicKeyToHexCompressed(pubKey *ecdsa.PublicKey) string {
+    xBytes := pubKey.X.Bytes()
+    // Ensure the bytes are 32 bytes long
+    paddedX := append(make([]byte, 32-len(xBytes)), xBytes...)
+    var compressed []byte
+    if pubKey.Y.Bit(0) == 0 { // Even Y
+        compressed = append([]byte{0x02}, paddedX...)
+    } else { // Odd Y
+        compressed = append([]byte{0x03}, paddedX...)
+    }
+    return hex.EncodeToString(compressed)
+}
