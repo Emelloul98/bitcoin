@@ -155,3 +155,23 @@ func publicKeyToHexCompressed(pubKey *ecdsa.PublicKey) string {
     }
     return hex.EncodeToString(compressed)
 }
+// Converts a hex-encoded compressed public key to a Bitcoin address
+func compressedPubKeyToAddress(compressedPubKeyHex string) (string, error) {
+    // Decode the hex-encoded compressed public key
+    pubKeyBytes, err := hex.DecodeString(compressedPubKeyHex)
+    if err != nil {
+        return "", err
+    }
+
+    // SHA-256 hashing
+    shaHash := sha256.New()
+    shaHash.Write(pubKeyBytes)
+    shaResult := shaHash.Sum(nil)
+
+    // RIPEMD-160 hashing
+    r160Hash := ripemd160.New()
+    r160Hash.Write(shaResult)
+    ripemdResult := r160Hash.Sum(nil)
+
+    return hex.EncodeToString(ripemdResult), nil
+}
