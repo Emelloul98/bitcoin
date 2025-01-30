@@ -127,4 +127,18 @@ signing:
 	}
 }
 
-
+func fillBytes(x *big.Int, buf []byte) []byte {
+	b := x.Bytes()
+	if len(b) > len(buf) {
+		panic("buffer too small")
+	}
+	offset := len(buf) - len(b)
+	for i := range buf {
+		if i < offset {
+			buf[i] = 0
+		} else {
+			buf[i] = b[i-offset]
+		}
+	}
+	return buf
+}
