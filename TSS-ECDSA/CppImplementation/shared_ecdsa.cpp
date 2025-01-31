@@ -232,3 +232,95 @@ ECDSA_SIG* create_combined_signature(const std::vector<ECDSA_SIG*>& partial_sign
 
     return combined_sig;
 }
+
+int main() {
+    try {
+        group = EC_GROUP_new_by_curve_name(NID_secp256k1);
+        if (!group) {
+            throw std::runtime_error("Failed to create EC_GROUP");
+        }
+
+        // Create shares: 5 total with threshold of 3
+        int n = 5, t = 3;
+        std::vector<KeyShare> shares = create_threshold_ecdsa(n, t);
+        
+        // Verify we got correct number of shares
+        assert(shares.size() == n);
+        
+        // Print public key
+        BN_CTX* ctx = BN_CTX_new();
+        char* pub_key_hex = EC_POINT_point2hex(group, global_public_key, 
+                                             POINT_CONVERSION_COMPRESSED, ctx);
+        std::cout << "Public Key: " << pub_key_hex << std::endl;
+        OPENSSL_free(pub_key_hex);
+        BN_CTX_free(ctx);
+        
+    
+
+        // Print share info
+        for(size_t i = 0; i < shares.size(); i++) {
+            char* x_hex = BN_bn2hex(shares[i].x);
+            char* y_hex = BN_bn2hex(shares[i].y);
+            std::cout << "Share " << i+1 << ":\n";
+            std::cout << "  x: " << x_hex << "\n";
+            std::cout << "  y: " << y_hex << "\n";
+            OPENSSL_free(x_hex);
+            OPENSSL_free(y_hex);
+        }
+        
+        // Generate three partial signatures
+        std::vector<ECDSA_SIG*> signatures;
+        const std::string message = "Hello, World!";
+        std::cout << "\nGenerating partial signatures for message: " << message << "\n\n";
+        
+        BIGNUM* k = generate_deterministic_k(message, shares[0].y);
+
+        for(int i = 1; i <= t; i++) {
+            std::string share_file = "share_" + std::to_string(i) + ".txt";
+            ECDSA_SIG* sig = partial_sign(share_file, message, k);
+            signatures.push_back(sig);
+
+            // Print signature components
+            const BIGNUM *r, *s;
+            ECDSA_SIG_get0(sig, &r, &s);
+            char* r_hex = BN_bn2hex(r);
+            char* s_hex = BN_bn2hex(s);
+            std::cout << "Partial Signature " << i << ":\n";
+            std::cout << "  r: " << r_hex << "\n";
+            std::cout << "  s: " << s_hex << "\n\n";
+            OPENSSL_free(r_hex);
+            OPENSSL_free(s_hex);
+        }
+
+        ECDSA_SIG* combined_signature = create_combined_signature(signatures);
+        // הדפסת החתימה המשותפת
+        const BIGNUM *r_combined, *s_combined;
+        ECDSA_SIG_get0(combined_signature, &r_combined, &s_combined);
+        char* r_hex = BN_bn2hex(r_combined);
+        char* s_hex = BN_bn2hex(s_combined);
+        std::cout << "Combined Signature:\n";
+        std::cout << "  r: " << r_hex << "\n";
+        std::cout << "  s: " << s_hex << "\n";
+
+        // שחרור המשאבים
+        OPENSSL_free(r_hex);
+        OPENSSL_free(s_hex);
+
+        ECDSA_SIG_free(combined_signature);
+
+        
+        // Cleanup signatures
+        for(auto sig : signatures) {
+            ECDSA_SIG_free(sig);
+        }
+        // Cleanup
+        cleanup_shares(shares);
+        return 0;
+        EC_GROUP_free(group);
+
+    }
+    catch(const std::exception& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+        return 1;
+    }
+}
