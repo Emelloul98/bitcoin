@@ -203,3 +203,32 @@ ECDSA_SIG* partial_sign(const std::string& file_path, const std::string& message
     
     return sig;
 }
+
+ECDSA_SIG* create_combined_signature(const std::vector<ECDSA_SIG*>& partial_signatures) {
+    // Initialize r and s as BIGNUM objects
+    BIGNUM* r_combined = BN_new();
+    BIGNUM* s_combined = BN_new();
+    BN_zero(r_combined);
+    BN_zero(s_combined);
+
+    // Combine r and s from each partial signature
+    for (size_t i = 0; i < partial_signatures.size(); i++) {
+        const BIGNUM* r_part;
+        const BIGNUM* s_part;
+        ECDSA_SIG_get0(partial_signatures[i], &r_part, &s_part);
+
+        // Combine r
+        BN_add(r_combined, r_combined, r_part);
+        BN_mod(r_combined, r_combined, EC_GROUP_get0_order(group), BN_CTX_new());
+
+        // Combine s
+        BN_add(s_combined, s_combined, s_part);
+        BN_mod(s_combined, s_combined, EC_GROUP_get0_order(group), BN_CTX_new());
+    }
+
+    // Create the combined signature
+    ECDSA_SIG* combined_sig = ECDSA_SIG_new();
+    ECDSA_SIG_set0(combined_sig, r_combined, s_combined);
+
+    return combined_sig;
+}
