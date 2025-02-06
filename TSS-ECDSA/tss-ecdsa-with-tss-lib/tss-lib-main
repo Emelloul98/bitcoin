@@ -2,15 +2,15 @@ package main
 
 import (
 	"crypto/ecdsa"
-  "crypto/sha256"
+	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 	"math/big"
 	"runtime"
 	"sync/atomic"
 	"testing"
-  "golang.org/x/crypto/ripemd160"
 
+	"golang.org/x/crypto/ripemd160"
 	"github.com/ipfs/go-log"
 	"github.com/stretchr/testify/assert"
 
@@ -24,26 +24,30 @@ const (
 	testParticipants = 5
 	testThreshold    = 3
 )
+
 func setUp(level string) {
 	if err := log.SetLogLevel("tss-lib", level); err != nil {
 		panic(err)
 	}
 }
+
 func main() {
 	setUp("info")
 	threshold := testThreshold
 
 	// PHASE: load keygen fixtures
 	keys, signPIDs, err := keygen.LoadKeygenTestFixturesRandomSet(testThreshold+1, testParticipants)
+	if err != nil {
+		panic(err)
+	}
 
-  pubKeyHex := publicKeyToHexCompressed(keys[0].ECDSAPub.ToECDSAPubKey())
-  addrHex, _ := compressedPubKeyToAddress(pubKeyHex)
-  fmt.Printf("Pub Key (x, y): %s %s\n", keys[0].ECDSAPub.X(), keys[0].ECDSAPub.Y())
-  fmt.Printf("Pub Key (hex, compressed): %s\n", pubKeyHex)
-  fmt.Printf("Address (hex): %s\n", addrHex)
+	pubKeyHex := publicKeyToHexCompressed(keys[0].ECDSAPub.ToECDSAPubKey())
+	addrHex, _ := compressedPubKeyToAddress(pubKeyHex)
+	fmt.Printf("Pub Key (x, y): %s %s\n", keys[0].ECDSAPub.X(), keys[0].ECDSAPub.Y())
+	fmt.Printf("Pub Key (hex, compressed): %s\n", pubKeyHex)
+	fmt.Printf("Address (hex): %s\n", addrHex)
 
 	// PHASE: signing
-	// use a shuffled selection of the list of parties for this test
 	p2pCtx := tss.NewPeerContext(signPIDs)
 	parties := make([]*LocalParty, 0, len(signPIDs))
 
@@ -52,8 +56,8 @@ func main() {
 	endCh := make(chan *common.SignatureData, len(signPIDs))
 
 	updater := test.SharedPartyUpdater
-  msgData, _ := hex.DecodeString("f7ab4253b131f70e698051aa621d1ae09665500ef4580d0d2decbc0d4b863671") // TODO: Put tx sighash here
-	// init the parties
+	msgData, _ := hex.DecodeString("f7ab4253b131f70e698051aa621d1ae09665500ef4580d0d2decbc0d4b863671")
+
 	for i := 0; i < len(signPIDs); i++ {
 		params := tss.NewParameters(tss.S256(), p2pCtx, signPIDs[i], len(signPIDs), threshold)
 		P := NewLocalParty(new(big.Int).SetBytes(msgData), params, keys[i], outCh, endCh, len(msgData)).(*LocalParty)
@@ -72,7 +76,7 @@ signing:
 		fmt.Printf("ACTIVE GOROUTINES: %d\n", runtime.NumGoroutine())
 		select {
 		case err := <-errCh:
-			common.Logger.Errorf("Error: %s", err)
+			fmt.Printf("Error: %s\n", err)
 			break signing
 
 		case msg := <-outCh:
@@ -86,8 +90,8 @@ signing:
 				}
 			} else {
 				if dest[0].Index == msg.GetFrom().Index {
-					fmt.Printf("party %d tried to send a message to itself (%d)", dest[0].Index, msg.GetFrom().Index)
-          exit(1)
+					fmt.Printf("party %d tried to send a message to itself (%d)\n", dest[0].Index, msg.GetFrom().Index)
+					return
 				}
 				go updater(parties[dest[0].Index], msg, errCh)
 			}
@@ -95,83 +99,52 @@ signing:
 		case <-endCh:
 			atomic.AddInt32(&ended, 1)
 			if atomic.LoadInt32(&ended) == int32(len(signPIDs)) {
-				fmt.Printf("Done. Received signature data from %d participants", ended)
+				fmt.Printf("Done. Received signature data from %d participants\n", ended)
 				R := parties[0].temp.bigR
-                //r := parties[0].temp.rx
-
 				modN := common.ModInt(tss.S256().Params().N)
 
-				// BEGIN check s correctness
 				sumS := big.NewInt(0)
 				for _, p := range parties {
 					sumS = modN.Add(sumS, p.temp.si)
 				}
-				// END check s correctness
 
-        fmt.Printf("Sig (r, s): %s %s\n", R.X(), sumS)
+				fmt.Printf("Sig (r, s): %s %s\n", R.X(), sumS)
 
-				// BEGIN ECDSA verify
-				pkX, pkY := keys[0].ECDSAPub.X(), keys[0].ECDSAPub.Y()
 				pk := ecdsa.PublicKey{
 					Curve: tss.EC(),
-					X:     pkX,
-					Y:     pkY,
+					X:     keys[0].ECDSAPub.X(),
+					Y:     keys[0].ECDSAPub.Y(),
 				}
 				ok := ecdsa.Verify(&pk, msgData, R.X(), sumS)
 				fmt.Println(ok)
-				// END ECDSA verify
-
 				break signing
 			}
 		}
 	}
 }
 
-func fillBytes(x *big.Int, buf []byte) []byte {
-	b := x.Bytes()
-	if len(b) > len(buf) {
-		panic("buffer too small")
-	}
-	offset := len(buf) - len(b)
-	for i := range buf {
-		if i < offset {
-			buf[i] = 0
-		} else {
-			buf[i] = b[i-offset]
-		}
-	}
-	return buf
-}
-// Serializes a public key into compressed form (0x02/0x03 + x)
 func publicKeyToHexCompressed(pubKey *ecdsa.PublicKey) string {
-    xBytes := pubKey.X.Bytes()
-    // Ensure the bytes are 32 bytes long
-    paddedX := append(make([]byte, 32-len(xBytes)), xBytes...)
-    var compressed []byte
-    if pubKey.Y.Bit(0) == 0 { // Even Y
-        compressed = append([]byte{0x02}, paddedX...)
-    } else { // Odd Y
-        compressed = append([]byte{0x03}, paddedX...)
-    }
-    return hex.EncodeToString(compressed)
+	xBytes := pubKey.X.Bytes()
+	paddedX := append(make([]byte, 32-len(xBytes)), xBytes...)
+	var compressed []byte
+	if pubKey.Y.Bit(0) == 0 {
+		compressed = append([]byte{0x02}, paddedX...)
+	} else {
+		compressed = append([]byte{0x03}, paddedX...)
+	}
+	return hex.EncodeToString(compressed)
 }
-// Converts a hex-encoded compressed public key to a Bitcoin address
+
 func compressedPubKeyToAddress(compressedPubKeyHex string) (string, error) {
-    // Decode the hex-encoded compressed public key
-    pubKeyBytes, err := hex.DecodeString(compressedPubKeyHex)
-    if err != nil {
-        return "", err
-    }
-
-    // SHA-256 hashing
-    shaHash := sha256.New()
-    shaHash.Write(pubKeyBytes)
-    shaResult := shaHash.Sum(nil)
-
-    // RIPEMD-160 hashing
-    r160Hash := ripemd160.New()
-    r160Hash.Write(shaResult)
-    ripemdResult := r160Hash.Sum(nil)
-
-    return hex.EncodeToString(ripemdResult), nil
+	pubKeyBytes, err := hex.DecodeString(compressedPubKeyHex)
+	if err != nil {
+		return "", err
+	}
+	shaHash := sha256.New()
+	shaHash.Write(pubKeyBytes)
+	shaResult := shaHash.Sum(nil)
+	r160Hash := ripemd160.New()
+	r160Hash.Write(shaResult)
+	ripemdResult := r160Hash.Sum(nil)
+	return hex.EncodeToString(ripemdResult), nil
 }
