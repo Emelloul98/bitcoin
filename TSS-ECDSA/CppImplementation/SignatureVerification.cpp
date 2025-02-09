@@ -144,3 +144,122 @@ public:
         return isValid;
     }
 };
+
+
+class ThresholdKeyGen
+{
+private:
+    const EC_GROUP *group;
+    BIGNUM *order;
+    EC_POINT *generator;
+    int t;
+    int n;
+
+    BIGNUM *generate_random_zq()
+    {
+        BIGNUM *rand = BN_new();
+        BN_rand_range(rand, order);
+        return rand;
+    }
+
+    std::vector<BIGNUM *> generate_polynomial(BIGNUM *ui, int degree)
+    {
+        std::vector<BIGNUM *> coefficients;
+        coefficients.push_back(BN_dup(ui));
+        for (int i = 1; i < degree; i++)
+        {
+            coefficients.push_back(generate_random_zq());
+        }
+        return coefficients;
+    }
+
+    BIGNUM *evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x)
+    {
+        BIGNUM *result = BN_new();  // התוצאה הסופית
+        BIGNUM *temp = BN_new();    // משתנה זמני לחישוב
+        BIGNUM *x_power = BN_new(); // מחזיק את x^i
+        BN_CTX *ctx = BN_CTX_new(); // הקשר לחישובים
+
+        BN_zero(result); // לאתחל את התוצאה ל-0
+        BN_one(x_power); // x^0 = 1
+
+        for (size_t i = 0; i < coefficients.size(); i++)
+        {
+            // temp = coefficients[i] * x_power mod order
+            BN_mod_mul(temp, coefficients[i], x_power, order, ctx);
+
+            // result = result + temp mod order
+            BN_mod_add(result, result, temp, order, ctx);
+
+            // x_power = x_power * x mod order
+            BN_mul_word(x_power, x); // x_power *= x
+        }
+
+        // שחרור זיכרון
+        BN_free(temp);
+        BN_free(x_power);
+        BN_CTX_free(ctx);
+
+        return result;
+    }
+
+public:
+    ThresholdKeyGen(int threshold, int total_participants)
+        : t(threshold), n(total_participants)
+    {
+        group = EC_GROUP_new_by_curve_name(NID_secp256k1);
+        order = BN_new();
+        generator = EC_POINT_new(group);
+        EC_POINT_copy(generator, EC_GROUP_get0_generator(group));
+        EC_GROUP_get_order(group, order, nullptr);
+    }
+
+    ~ThresholdKeyGen()
+    {
+        BN_free(order);
+        EC_POINT_free(generator);
+        EC_GROUP_free((EC_GROUP *)group);
+    }
+
+    json generate_participant_data(int participant_id)
+    {
+        json data;
+        BN_CTX *ctx = BN_CTX_new();
+
+        BIGNUM *ui = generate_random_zq();
+        std::vector<BIGNUM *> polynomial = generate_polynomial(ui, t);
+
+        std::vector<std::string> poly_str;
+        for (auto coeff : polynomial)
+        {
+            poly_str.push_back(BN_bn2hex(coeff));
+        }
+
+        EC_POINT *yi = EC_POINT_new(group);
+        EC_POINT_mul(group, yi, ui, nullptr, nullptr, ctx);
+
+        data["yi"] = EC_POINT_point2hex(group, yi, POINT_CONVERSION_COMPRESSED, ctx);
+        data["participant_id"] = participant_id;
+        data["ui"] = BN_bn2hex(ui);
+        data["polynomial"] = poly_str;
+        data["g"] = EC_POINT_point2hex(group, generator, POINT_CONVERSION_COMPRESSED, ctx);
+        data["q"] = BN_bn2hex(order);
+
+        std::vector<std::string> shares;
+        for (int i = 1; i <= n; i++)
+        {
+            BIGNUM *share = evaluate_polynomial(polynomial, i);
+            shares.push_back(BN_bn2hex(share));
+            BN_free(share);
+        }
+        data["shares"] = shares;
+
+        EC_POINT_free(yi);
+        for (auto coeff : polynomial)
+            BN_free(coeff);
+        BN_free(ui);
+        BN_CTX_free(ctx);
+
+        return data;
+    }
+};
