@@ -313,3 +313,213 @@ public:
         return result;
         }
 };
+
+class ThresholdSigning
+{
+private:
+    const EC_GROUP *group;
+    BIGNUM *order;
+    int t;
+    int n;
+
+    BIGNUM *calculate_lambda(int i, const std::vector<int> &S)
+    {
+        BIGNUM *lambda = BN_new();
+        BN_CTX *ctx = BN_CTX_new();
+
+        try
+        {
+            // Initialize lambda to 1
+            BN_one(lambda);
+
+            for (int j : S)
+            {
+                if (j != i)
+                {
+                    BIGNUM *x_j = BN_new();
+                    BIGNUM *x_i = BN_new();
+                    BIGNUM *num = BN_new();
+                    BIGNUM *den = BN_new();
+
+                    // Convert indices to BIGNUM
+                    BN_set_word(x_j, j);
+                    BN_set_word(x_i, i);
+
+                    // Calculate numerator: x_j
+                    BN_copy(num, x_j);
+
+                    // Calculate denominator: x_i - x_j
+                    BN_sub(den, x_i, x_j);
+
+                    // Ensure we're working in the field
+                    BN_mod(num, num, order, ctx);
+                    if (BN_is_negative(den))
+                    {
+                        BN_add(den, den, order);
+                    }
+
+                    // Calculate modular inverse of denominator
+                    BIGNUM *den_inv = BN_new();
+                    if (!BN_mod_inverse(den_inv, den, order, ctx))
+                    {
+                        throw std::runtime_error("Failed to calculate modular inverse");
+                    }
+
+                    // Multiply current lambda by fraction
+                    BN_mod_mul(num, num, den_inv, order, ctx);
+                    BN_mod_mul(lambda, lambda, num, order, ctx);
+
+                    BN_free(x_j);
+                    BN_free(x_i);
+                    BN_free(num);
+                    BN_free(den);
+                    BN_free(den_inv);
+                }
+            }
+        }
+        catch (const std::exception &e)
+        {
+            BN_CTX_free(ctx);
+            throw;
+        }
+
+        BN_CTX_free(ctx);
+        return lambda;
+    }
+
+public:
+    ThresholdSigning(int threshold, int total_participants)
+        : t(threshold), n(total_participants)
+    {
+        group = EC_GROUP_new_by_curve_name(NID_secp256k1);
+        order = BN_new();
+        EC_GROUP_get_order(group, order, nullptr);
+    }
+
+    ~ThresholdSigning()
+    {
+        BN_free(order);
+        EC_GROUP_free((EC_GROUP *)group);
+    }
+
+    json generateSignatureShares(const json &keyData, const std::vector<int> &signingGroup, const BIGNUM *message)
+    {
+        json shares;
+        BN_CTX *ctx = BN_CTX_new();
+
+        try
+        {
+            // BIGNUM *ki = generate_random_zq();
+            // BIGNUM *γi = generate_random_zq();
+            BIGNUM *k = BN_new();
+            BN_rand_range(k, order);
+
+            EC_POINT *R = EC_POINT_new(group);
+            EC_POINT_mul(group, R, k, nullptr, nullptr, ctx);
+
+            BIGNUM *r = BN_new();
+            EC_POINT_get_affine_coordinates(group, R, r, nullptr, ctx);
+            BN_mod(r, r, order, ctx);
+
+            std::cout << "k = " << BN_bn2hex(k) << std::endl;
+            std::cout << "r before shares = " << BN_bn2hex(r) << std::endl;
+
+            for (int i : signingGroup)
+            {
+                BIGNUM *xi = BN_new();
+                BN_hex2bn(&xi, keyData[i - 1]["ui"].get<std::string>().c_str());
+
+                BIGNUM *lambda = calculate_lambda(i, signingGroup);
+                std::cout << "lambda_" << i << " = " << BN_bn2hex(lambda) << std::endl;
+
+                BIGNUM *k_inv = BN_new();
+                BN_mod_inverse(k_inv, k, order, ctx);
+
+                // New order of operations:
+                // 1. lambda * message
+                BIGNUM *s_i = BN_new();
+                BN_mod_mul(s_i, lambda, message, order, ctx);
+
+                // 2. lambda * xi * r
+                BIGNUM *lambda_xi = BN_new();
+                BN_mod_mul(lambda_xi, lambda, xi, order, ctx);
+                BIGNUM *lambda_xi_r = BN_new();
+                BN_mod_mul(lambda_xi_r, lambda_xi, r, order, ctx);
+
+                // 3. Add them
+                BN_mod_add(s_i, s_i, lambda_xi_r, order, ctx);
+
+                // 4. Multiply by k_inv
+                BN_mod_mul(s_i, s_i, k_inv, order, ctx);
+
+                std::cout << "Final s_" << i << " = " << BN_bn2hex(s_i) << std::endl;
+
+                shares[std::to_string(i)] = BN_bn2hex(s_i);
+
+                BN_free(xi);
+                BN_free(lambda);
+                BN_free(k_inv);
+                BN_free(lambda_xi);
+                BN_free(lambda_xi_r);
+                BN_free(s_i);
+            }
+
+            shares["r"] = BN_bn2hex(r);
+
+            BN_free(k);
+            BN_free(r);
+            EC_POINT_free(R);
+        }
+        catch (const std::exception &e)
+        {
+            BN_CTX_free(ctx);
+            throw;
+        }
+
+        BN_CTX_free(ctx);
+        return shares;
+    }
+    json combineSignatureShares(const json &shares)
+    {
+        json finalSignature;
+        BN_CTX *ctx = BN_CTX_new();
+
+        try
+        {
+            BIGNUM *s = BN_new();
+            BN_zero(s);
+
+            for (auto it = shares.begin(); it != shares.end(); ++it)
+            {
+                if (it.key() != "r")
+                {
+                    BIGNUM *s_i = BN_new();
+                    BN_hex2bn(&s_i, it.value().get<std::string>().c_str());
+
+                    // Add modulo order
+                    BIGNUM *temp = BN_new();
+                    BN_mod_add(temp, s, s_i, order, ctx);
+                    BN_copy(s, temp);
+
+                    std::cout << "After adding share " << it.key() << ", s = " << BN_bn2hex(s) << std::endl;
+
+                    BN_free(s_i);
+                    BN_free(temp);
+                }
+            }
+
+            finalSignature["r"] = shares["r"];
+            finalSignature["s"] = BN_bn2hex(s);
+
+            BN_free(s);
+        }
+        catch (const std::exception &e)
+        {
+            BN_CTX_free(ctx);
+            throw;
+        }
+
+        BN_CTX_free(ctx);
+        return finalSignature;
+    }
+};
