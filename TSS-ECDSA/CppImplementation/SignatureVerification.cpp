@@ -262,4 +262,54 @@ public:
 
         return data;
     }
+
+    json combine_shares(std::vector<json> &participants_data)
+    {
+        json result;
+        BN_CTX *ctx = BN_CTX_new();
+
+        for (int i = 0; i < n; i++)
+        {
+            BIGNUM *xi = BN_new();
+            BN_zero(xi);
+
+            for (const auto &data : participants_data)
+            {
+                BIGNUM *share = BN_new();
+                BN_hex2bn(&share, data["shares"][i].get<std::string>().c_str());
+                BN_mod_add(xi, xi, share, order, ctx);
+                BN_free(share);
+            }
+
+            participants_data[i]["xi"] = BN_bn2hex(xi);
+        }
+
+        EC_POINT *Y = EC_POINT_new(group);
+        EC_POINT_set_to_infinity(group, Y);
+        EC_POINT *temp = EC_POINT_new(group); 
+
+        for (const auto &participant : participants_data)
+        {
+            const std::string &yi_hex = participant["yi"];
+            if (!EC_POINT_hex2point(group, yi_hex.c_str(), temp, ctx))
+            {
+                std::cerr << "Error decoding EC_POINT from hex: " << yi_hex << std::endl;
+                continue;
+            }
+
+            // Y = Y + yi
+            if (!EC_POINT_add(group, Y, Y, temp, ctx))
+            {
+                std::cerr << "Error adding points on elliptic curve" << std::endl;
+                continue;
+            }
+        }
+
+        result["public_key"] = EC_POINT_point2hex(group, Y, POINT_CONVERSION_UNCOMPRESSED, ctx);
+
+        EC_POINT_free(Y);
+        BN_CTX_free(ctx);
+        EC_POINT_free(temp);
+        return result;
+        }
 };
