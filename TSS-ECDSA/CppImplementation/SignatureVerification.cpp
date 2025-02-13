@@ -523,3 +523,54 @@ public:
         return finalSignature;
     }
 };
+
+class ThresholdECDSA 
+{
+private:
+    std::unique_ptr<ThresholdKeyGen> keyGen;
+    std::unique_ptr<ThresholdSigning> signing;
+    json participantsData;
+    json publicKeyData;
+    int t;
+    int n;
+
+public:
+    ThresholdECDSA(int threshold, int total_participants)
+        : t(threshold), n(total_participants)
+    {
+        keyGen = std::make_unique<ThresholdKeyGen>(t, n);
+        signing = std::make_unique<ThresholdSigning>(t, n);
+    }
+
+    void generateKeys()
+    {
+        std::vector<json> participants_data;
+        for (int i = 1; i <= n; i++)
+        {
+            json data = keyGen->generate_participant_data(i);
+            participants_data.push_back(data);
+        }
+        publicKeyData = keyGen->combine_shares(participants_data);
+        participantsData = json(participants_data);
+    }
+
+    json signMessage(const std::string &message, const std::vector<int> &signingGroup)
+    {
+        BIGNUM *msgHash = hash_message(message);
+        std::cout << "Message hash: " << BN_bn2hex(msgHash) << std::endl;
+
+        std::cout << "Using public key: " << publicKeyData["public_key"].get<std::string>() << std::endl;
+
+        auto shares = signing->generateSignatureShares(participantsData, signingGroup, msgHash);
+        auto finalSig = signing->combineSignatureShares(shares);
+
+        BN_free(msgHash);
+        return finalSig;
+    }
+
+    bool verifySignature(const std::string &message, const json &signature)
+    {
+        SignatureVerification verifier(publicKeyData["public_key"].get<std::string>());
+        return verifier.verifySignature(message, signature);
+    }
+};
