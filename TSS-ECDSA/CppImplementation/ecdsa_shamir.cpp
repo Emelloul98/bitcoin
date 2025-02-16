@@ -48,3 +48,62 @@ struct PartialSignature {
     int64_t index;
     int64_t s_i;
 };
+
+
+class ThresholdSignature {
+private:
+    int64_t n; // Modulus
+    vector<int64_t> x_coordinates; // x-coordinates for Lagrange interpolation
+
+    // Calculate Lagrange basis polynomial weight
+    int64_t calculate_lagrange_weight(int i, const vector<int64_t>& x_coords, int64_t n) {
+        int64_t weight = 1;
+        for (size_t j = 0; j < x_coords.size(); j++) {
+            if (i != j) {
+                int64_t numerator = x_coords[j];
+                int64_t denominator = mod(x_coords[j] - x_coords[i], n);
+                int64_t inv_denominator = mod_inverse(denominator, n);
+                weight = mod(weight * mod(numerator * inv_denominator, n), n);
+            }
+        }
+        return weight;
+    }
+
+public:
+    ThresholdSignature(int64_t modulus) : n(modulus) {}
+
+    // Generate partial signature for a participant
+    PartialSignature generate_partial_signature(
+        int64_t index,
+        int64_t d_i,  // Partial private key
+        int64_t k,    // Shared nonce
+        int64_t r,    // R_x coordinate
+        int64_t h     // Message hash
+    ) {
+        int64_t k_inv = mod_inverse(k, n);
+        int64_t s_i = mod(k_inv * (h + r * d_i), n);
+
+        return PartialSignature{index, s_i};
+    }
+
+    // Reconstruct the full signature from partial signatures
+    Signature reconstruct_signature(
+        const vector<PartialSignature>& partial_sigs,
+        int64_t r
+    ) {
+        // Extract x-coordinates (indices) for Lagrange interpolation
+        x_coordinates.clear();
+        for (const auto& sig : partial_sigs) {
+            x_coordinates.push_back(sig.index);
+        }
+
+        // Calculate final s using Lagrange interpolation
+        int64_t s = 0;
+        for (size_t i = 0; i < partial_sigs.size(); i++) {
+            int64_t weight = calculate_lagrange_weight(i, x_coordinates, n);
+            s = mod(s + mod(weight * partial_sigs[i].s_i, n), n);
+        }
+
+        return Signature{r, s};
+    }
+};
