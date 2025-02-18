@@ -107,3 +107,75 @@ public:
         return Signature{r, s};
     }
 };
+
+void generate_distributed_key(int n, int k) {
+    if (k > n) {
+        throw std::invalid_argument("Threshold k cannot be greater than the number of participants n.");
+    }
+
+    secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+    if (!ctx) {
+        throw std::runtime_error("Failed to initialize secp256k1 context.");
+    }
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<unsigned char> dis(0, 255);
+    for (int i = 0; i < 32; ++i) {
+        master_private_key[i] = dis(gen);
+    }
+
+    std::cout << "Master private key: ";
+    for (int i = 0; i < 32; ++i) {
+        printf("%02x", master_private_key[i]);
+    }
+    std::cout << "\n";
+
+    secp256k1_pubkey pubkey;
+    if (!secp256k1_ec_pubkey_create(ctx, &pubkey, master_private_key)) {
+        throw std::runtime_error("Failed to create master public key.");
+    }
+
+    size_t pubkey_len = 65;
+    secp256k1_ec_pubkey_serialize(ctx, master_public_key, &pubkey_len, &pubkey, SECP256K1_EC_UNCOMPRESSED);
+
+    std::cout << "Master public key: ";
+    for (size_t i = 0; i < pubkey_len; ++i) {
+        printf("%02x", master_public_key[i]);
+    }
+    std::cout << "\n";
+
+    private_key_shares.clear();
+
+    std::vector<std::vector<unsigned char>> coefficients(k - 1, std::vector<unsigned char>(32));
+    for (int i = 0; i < k - 1; ++i) {
+        for (int j = 0; j < 32; ++j) {
+            coefficients[i][j] = dis(gen);
+        }
+    }
+
+    for (int x = 1; x <= n; ++x) {
+        std::vector<unsigned char> share(32, 0);
+        for (int j = 0; j < 32; ++j) {
+            unsigned char value = master_private_key[j];
+            unsigned char x_pow = 1;
+
+            for (int i = 0; i < k - 1; ++i) {
+                value ^= coefficients[i][j] * x_pow;
+                x_pow *= x;
+            }
+
+            share[j] = value;
+        }
+        private_key_shares.push_back(share);
+
+        std::cout << "Private key share for participant " << x << ": ";
+        for (int j = 0; j < 32; ++j) {
+            printf("%02x", share[j]);
+        }
+        std::cout << "\n";
+    }
+
+    secp256k1_context_destroy(ctx);
+}
+
