@@ -179,3 +179,41 @@ void generate_distributed_key(int n, int k) {
     secp256k1_context_destroy(ctx);
 }
 
+
+int main() {
+    int n = 5; 
+    int k = 3;
+
+    try {
+        generate_distributed_key(n, k);
+
+        // Example usage of ThresholdSignature
+        int64_t mod = 1234567891; // Example modulus
+        ThresholdSignature ts(mod);
+
+        // Parameters for signing
+        int64_t shared_nonce = 123456; // Shared nonce
+        int64_t r = 987654; // R_x coordinate
+        int64_t h = 567890; // Message hash
+
+        // Generate partial signatures
+        vector<PartialSignature> partial_sigs;
+        vector<int64_t> partial_keys = {11111, 22222, 33333}; // Example partial private keys
+
+        for (size_t i = 0; i < partial_keys.size(); i++) {
+            PartialSignature ps = ts.generate_partial_signature(i + 1, partial_keys[i], shared_nonce, r, h);
+            partial_sigs.push_back(ps);
+        }
+
+        // Reconstruct the full signature
+        Signature final_sig = ts.reconstruct_signature(partial_sigs, r);
+
+        std::cout << "Reconstructed Signature: (r: " << final_sig.r << ", s: " << final_sig.s << ")\n";
+
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << "\n";
+    }
+
+    return 0;
+}
+
