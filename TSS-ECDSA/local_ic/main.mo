@@ -34,3 +34,19 @@ actor {
       #Err(Error.message(err))
     }
   };
+  public shared (msg) func sign(message: Text) : async { #Ok : { signature_hex: Text };  #Err : Text } {
+    let caller = Principal.toBlob(msg.caller);
+    try {
+      let message_hash: Blob = Blob.fromArray(SHA256.sha256(Blob.toArray(Text.encodeUtf8(message))));
+      Cycles.add(25_000_000_000);
+      let { signature } = await ic.sign_with_ecdsa({
+          message_hash;
+          derivation_path = [ caller ];
+          key_id = { curve = #secp256k1; name = "dfx_test_key" };
+      });
+      #Ok({ signature_hex = Hex.encode(Blob.toArray(signature))})
+    } catch (err) {
+      #Err(Error.message(err))
+    }
+  };
+}
