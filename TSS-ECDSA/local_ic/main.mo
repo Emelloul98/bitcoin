@@ -19,3 +19,18 @@ actor {
       key_id : { curve: { #secp256k1; } ; name: Text };
     }) -> async ({ signature : Blob });
   };
+ let ic : IC = actor("aaaaa-aa");
+
+  public shared (msg) func public_key() : async { #Ok : { public_key_hex: Text }; #Err : Text } {
+    let caller = Principal.toBlob(msg.caller);
+    try {
+      let { public_key } = await ic.ecdsa_public_key({
+          canister_id = null;
+          derivation_path = [ caller ];
+          key_id = { curve = #secp256k1; name = "dfx_test_key" };
+      });
+      #Ok({ public_key_hex = Hex.encode(Blob.toArray(public_key)) })
+    } catch (err) {
+      #Err(Error.message(err))
+    }
+  };
