@@ -72,3 +72,62 @@ Participant createParticipant(int id, BIGNUM* privateKeyPart, secp256k1_context*
 
     return participant;
 }
+
+std::vector<Participant> initializeParticipants(
+    int numParticipants,
+    BIGNUM* globalPrivateKey,
+    BIGNUM* n, 
+    secp256k1_context* ctx,
+    BN_CTX* bn_ctx
+) {
+    std::vector<Participant> participants;
+
+    std::vector<BIGNUM*> privateKeyParts(numParticipants, nullptr);
+    for (int i = 0; i < numParticipants - 1; ++i) {
+        privateKeyParts[i] = BN_new();
+        BN_rand_range(privateKeyParts[i], n);
+    }
+
+    privateKeyParts[numParticipants - 1] = BN_new();
+    BN_copy(privateKeyParts[numParticipants - 1], globalPrivateKey);
+    for (int i = 0; i < numParticipants - 1; ++i) {
+        BN_mod_sub(privateKeyParts[numParticipants - 1],
+                   privateKeyParts[numParticipants - 1],
+                   privateKeyParts[i],
+                   n,
+                   bn_ctx);
+    }
+
+    for (int i = 0; i < numParticipants; ++i) {
+        participants.push_back(createParticipant(i, privateKeyParts[i], ctx));
+    }
+
+    secp256k1_pubkey globalR;
+    std::vector<const secp256k1_pubkey*> pubkeys;
+    for (const auto& participant : participants) {
+        pubkeys.push_back(&participant.Ri);
+    }
+
+    int success = secp256k1_ec_pubkey_combine(ctx, &globalR, pubkeys.data(), pubkeys.size());
+    assert(success);
+
+    unsigned char globalR_compressed[33];
+    size_t compressedSize = sizeof(globalR_compressed);
+    success = secp256k1_ec_pubkey_serialize(
+        ctx, globalR_compressed, &compressedSize, &globalR, SECP256K1_EC_COMPRESSED);
+    assert(success);
+
+    BIGNUM* globalRx = BN_new();
+    BN_bin2bn(globalR_compressed + 1, 32, globalRx);
+
+    for (auto& participant : participants) {
+        participant.r_x = BN_dup(globalRx);
+    }
+
+    BN_free(globalRx);
+    for (auto& part : privateKeyParts) {
+        BN_free(part);
+    }
+
+    return participants;
+}
