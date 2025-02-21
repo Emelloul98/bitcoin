@@ -54,3 +54,21 @@ BIGNUM* computePartialSignature(
     return s_i;
 }
 
+Participant createParticipant(int id, BIGNUM* privateKeyPart, secp256k1_context* ctx) {
+    Participant participant;
+    participant.id = id;
+
+    participant.privateKeyPart = BN_dup(privateKeyPart);
+
+    participant.nonce = BN_new();
+    BN_rand(participant.nonce, 256, 0, 0);
+
+    unsigned char nonceBytes[32];
+    BN_bn2binpad(participant.nonce, nonceBytes, 32);
+    int success = secp256k1_ec_pubkey_create(ctx, &participant.Ri, nonceBytes);
+    assert(success);
+
+    participant.r_x = BN_new();
+
+    return participant;
+}
