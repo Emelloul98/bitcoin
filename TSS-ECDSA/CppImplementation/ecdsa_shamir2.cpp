@@ -145,3 +145,65 @@ BIGNUM* combineSignatures(const std::vector<BIGNUM*>& partialSignatures, BIGNUM*
     return combinedSignature;
 }
 
+int main() {
+    secp256k1_context* ctx = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+    assert(ctx);
+
+    BN_CTX* bn_ctx = BN_CTX_new();
+    assert(bn_ctx);
+
+    int numParticipants = 5; 
+
+    BIGNUM* globalPrivateKey = BN_new();
+    BN_rand(globalPrivateKey, 256, 0, 0);
+
+    BIGNUM* secp256k1_order = BN_new();
+    BN_hex2bn(&secp256k1_order, "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141");
+
+    std::vector<Participant> participants = initializeParticipants(numParticipants, globalPrivateKey, secp256k1_order, ctx, bn_ctx);
+
+    for (const auto& participant : participants) {
+        std::cout << "Participant ID: " << participant.id << "\n";
+        std::cout << "Private Key Part: " << BN_bn2hex(participant.privateKeyPart) << "\n";
+        std::cout << "Nonce: " << BN_bn2hex(participant.nonce) << "\n";
+    }
+
+    std::string message = "This is a real message to sign.";
+
+    unsigned char hash[32];
+    SHA256(reinterpret_cast<const unsigned char*>(message.c_str()), message.size(), hash);
+    BIGNUM* z = BN_bin2bn(hash, 32, nullptr);
+
+    std::vector<BIGNUM*> partialSignatures;
+    for (const auto& participant : participants) {
+        BIGNUM* s_i = computePartialSignature(participant, z, secp256k1_order, bn_ctx);
+        partialSignatures.push_back(s_i);
+    }
+
+    for (size_t i = 0; i < partialSignatures.size(); ++i) {
+        std::cout << "Participant " << participants[i].id << " Partial Signature: " << BN_bn2hex(partialSignatures[i]) << "\n";
+    }
+
+    BIGNUM* finalSignature = combineSignatures(partialSignatures, secp256k1_order, bn_ctx);
+
+    std::cout << "Final Signature: " << BN_bn2hex(finalSignature) << std::endl;
+
+    BN_free(finalSignature);
+
+    BN_free(globalPrivateKey);
+    BN_free(secp256k1_order);
+    BN_free(z);
+    for (auto& signature : partialSignatures) {
+        BN_free(signature);
+    }
+    for (auto& participant : participants) {
+        BN_free(participant.privateKeyPart);
+        BN_free(participant.nonce);
+        BN_free(participant.r_x);
+    }
+    BN_CTX_free(bn_ctx);
+    secp256k1_context_destroy(ctx);
+
+    return 0;
+}
+
