@@ -131,3 +131,17 @@ std::vector<Participant> initializeParticipants(
 
     return participants;
 }
+
+BIGNUM* combineSignatures(const std::vector<BIGNUM*>& partialSignatures, BIGNUM* n, BN_CTX* ctx) { 
+    BIGNUM* combinedSignature = BN_new();
+    BN_zero(combinedSignature);
+
+    for (const auto& s_i : partialSignatures) {
+        if (!BN_mod_add(combinedSignature, combinedSignature, s_i, n, ctx)) {
+            throw std::runtime_error("Failed to combine partial signatures");
+        }
+    }
+
+    return combinedSignature;
+}
+
