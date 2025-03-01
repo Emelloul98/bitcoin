@@ -45,3 +45,46 @@ void display_message_before_after_verification(const unsigned char *message, siz
     }
 }
 
+int main() {
+    // Generate ECDSA key pair (this is part of your original code)
+    EC_KEY *key = EC_KEY_new_by_curve_name(NID_secp256k1);
+    EC_KEY_generate_key(key);
+    
+    // Generate the message to sign
+    unsigned char message[] = "Hello, Shamir!";
+    size_t message_len = strlen((char *)message);
+
+    // Sign the message with the private key
+    unsigned char *sig = NULL;
+    unsigned int sig_len;
+    if (ECDSA_sign(0, message, message_len, sig, &sig_len, key) != 1) {
+        printf("Error signing the message!\n");
+        return 1;
+    }
+
+    // Create the signature object from the raw signature
+    ECDSA_SIG *signature = ECDSA_SIG_new();
+    if (!ECDSA_SIG_set0(signature, BN_bin2bn(sig, sig_len, NULL), BN_bin2bn(sig + sig_len / 2, sig_len / 2, NULL))) {
+        printf("Error creating signature object!\n");
+        return 1;
+    }
+
+    // Display the message before verification
+    display_message_before_after_verification(message, message_len, signature, key);
+    
+    // Get the private key as a BIGNUM
+    const BIGNUM *private_key_bn = EC_KEY_get0_private_key(key);
+    
+    // Convert the BIGNUM to an unsigned char array
+    size_t private_key_size = BN_num_bytes(private_key_bn);
+    unsigned char private_key[private_key_size];
+    BN_bn2bin(private_key_bn, private_key);
+
+    // Save private key shares into files
+    save_private_key_shares("private_key", private_key, private_key_size, 5, 3); // example: 5 shares, threshold 3
+
+    // Cleanup
+    EC_KEY_free(key);
+    ECDSA_SIG_free(signature);
+    return 0;
+}
