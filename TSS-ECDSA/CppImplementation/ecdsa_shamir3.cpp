@@ -312,3 +312,222 @@ public:
         return result;
     }
 };
+
+
+
+class ThresholdSigning
+{
+private:
+    const EC_GROUP *group;
+    BIGNUM *order;
+    int t;
+    int n;
+
+public:
+    ThresholdSigning(int threshold, int total_participants)
+        : t(threshold), n(total_participants)
+    {
+        group = EC_GROUP_new_by_curve_name(NID_secp256k1);
+        order = BN_new();
+        EC_GROUP_get_order(group, order, nullptr);
+    }
+
+    ~ThresholdSigning()
+    {
+        BN_free(order);
+        EC_GROUP_free((EC_GROUP *)group);
+    }
+
+    void generateSignatureShares(json &participants_data, const std::vector<int> &signingGroup)
+    {
+        BN_CTX *ctx = BN_CTX_new();
+
+        for (int i = 1; i <= n; i++)
+        {
+            participants_data[i]["ki"] = BN_bn2hex(generate_random_zq(order));
+            participants_data[i]["gammai"] = BN_bn2hex(generate_random_zq(order));
+
+            double result = 1.0;
+
+            for (int j : signingGroup)
+            {
+                if (j == i)
+                    continue;
+
+                // Calculate j/(j-i)
+                result *= static_cast<double>(j) / (j - i);
+            }
+            std::string wj_str = std::to_string(result); // Convert double to string
+            BIGNUM *wj_bn = BN_new();
+            BN_dec2bn(&wj_bn, wj_str.c_str());
+            participants_data[i]["wi"] = BN_bn2hex(wj_bn);
+            BN_free(wj_bn); // Free the BIGNUM after use
+
+        }
+
+        // Initialize matrices for storing αij, βij, μij, νij
+        json alpha_matrix; // For storing αij values
+        json beta_matrix;  // For storing βij values
+        json mu_matrix;    // For storing μij values
+        json nu_matrix;    // For storing νij values
+
+        // Phase 2 : Calculate αij and βij, Calculate μij and νij
+        for (int i : signingGroup)
+        {
+            for (int j : signingGroup)
+            {
+                if (i >= j)
+                    continue; // Process only upper triangle
+
+                BIGNUM *ki = BN_new();
+                BIGNUM *gammaj = BN_new();
+                BIGNUM * wj = BN_new();
+
+                BN_hex2bn(&ki, participants_data[i]["ki"].get<std::string>().c_str());
+                BN_hex2bn(&gammaj, participants_data[j]["gammai"].get<std::string>().c_str());
+                BN_hex2bn(&wj, participants_data[j]["wi"].get<std::string>().c_str());
+
+
+                // Calculate ki * γj
+                BIGNUM *product = BN_new();
+                BN_mul(product, ki, gammaj, ctx);
+
+                // Calculate ki * wj
+                BIGNUM *product1 = BN_new();
+                
+                BN_mul(product1, ki, wj, ctx);
+
+                // Generate random αij
+                BIGNUM *alpha_ij = generate_random_zq(order);
+                // Generate random μij
+                BIGNUM *mu_ij = generate_random_zq(order);
+
+                // Calculate βij = ki * γj - αij
+                BIGNUM *beta_ij = BN_new();
+                BN_sub(beta_ij, product, alpha_ij);
+
+                // Calculate νij = ki * wj - μij
+                BIGNUM *nu_ij = BN_new();
+                BN_sub(nu_ij, product1, mu_ij);
+
+                // Store results in matrices
+                alpha_matrix[std::to_string(i)][std::to_string(j)] = BN_bn2hex(alpha_ij);
+                beta_matrix[std::to_string(i)][std::to_string(j)] = BN_bn2hex(beta_ij);
+                alpha_matrix[std::to_string(j)][std::to_string(i)] = BN_bn2hex(beta_ij); // βji = αij
+                beta_matrix[std::to_string(j)][std::to_string(i)] = BN_bn2hex(alpha_ij); // αji = βij
+
+                // Store results in matrices
+                mu_matrix[std::to_string(i)][std::to_string(j)] = BN_bn2hex(mu_ij);
+                nu_matrix[std::to_string(i)][std::to_string(j)] = BN_bn2hex(nu_ij);
+                mu_matrix[std::to_string(j)][std::to_string(i)] = BN_bn2hex(nu_ij); // νji = μij
+                nu_matrix[std::to_string(j)][std::to_string(i)] = BN_bn2hex(mu_ij); // μji = νij
+
+                BN_free(product);
+                BN_free(alpha_ij);
+                BN_free(beta_ij);
+                BN_free(ki);
+                BN_free(gammaj);
+
+                BN_free(product);
+                BN_free(mu_ij);
+                BN_free(nu_ij);
+                BN_free(ki);
+                BN_free(wj);
+            }
+        }
+
+        // Calculate final δi and σi for each participant
+        for (int i : signingGroup)
+        {
+            BIGNUM *delta_i = BN_new();
+            BIGNUM *sigma_i = BN_new();
+            BN_zero(delta_i);
+            BN_zero(sigma_i);
+
+            // Add ki * γi to delta_i
+            BIGNUM *ki = BN_new();
+            BIGNUM *gammai = BN_new();
+            BN_hex2bn(&ki, participants_data[i]["ki"].get<std::string>().c_str());
+            BN_hex2bn(&gammai, participants_data[i]["gammai"].get<std::string>().c_str());
+
+            BIGNUM *ki_gammai = BN_new();
+            BN_mul(ki_gammai, ki, gammai, ctx);
+            BN_add(delta_i, delta_i, ki_gammai);
+
+            // Add ki * wi to sigma_i
+            BIGNUM *wi = BN_new();
+            BN_hex2bn(&wi, participants_data[i]["wi"].get<std::string>().c_str());
+            BIGNUM *ki_wi = BN_new();
+            BN_mul(ki_wi, ki, wi, ctx);
+            BN_add(sigma_i, sigma_i, ki_wi);
+
+            // Add all αij and βji to delta_i
+            for (int j : signingGroup)
+            {
+                if (j == i)
+                    continue;
+
+                BIGNUM *alpha_ij = BN_new();
+                BN_hex2bn(&alpha_ij,  alpha_matrix[std::to_string(i)][std::to_string(j)].get<std::string>().c_str());
+                BIGNUM *beta_ji = BN_new();
+                BN_hex2bn(&beta_ji, beta_matrix[std::to_string(j)][std::to_string(i)].get<std::string>().c_str());
+                BN_add(delta_i, delta_i, alpha_ij);
+                BN_add(delta_i, delta_i, beta_ji);
+
+                BIGNUM *mu_ij = BN_new();
+                BIGNUM *nu_ji = BN_new();
+                BN_hex2bn(&mu_ij, mu_matrix[std::to_string(i)][std::to_string(j)].get<std::string>().c_str());
+                BN_hex2bn(&nu_ji, nu_matrix[std::to_string(j)][std::to_string(i)].get<std::string>().c_str());
+
+                BN_add(sigma_i, sigma_i, mu_ij);
+                BN_add(sigma_i, sigma_i, nu_ji);
+
+                BN_free(alpha_ij);
+                BN_free(beta_ji);
+                BN_free(mu_ij);
+                BN_free(nu_ji);
+            }
+
+            // Store results
+            participants_data[i]["delta_i"] = BN_bn2hex(delta_i);
+            participants_data[i]["sigma_i"] = BN_bn2hex(sigma_i);
+
+            BN_free(delta_i);
+            BN_free(sigma_i);
+            BN_free(ki);
+            BN_free(gammai);
+            BN_free(ki_gammai);
+            BN_free(wi);
+            BN_free(ki_wi);
+        }
+
+        BN_CTX_free(ctx);
+    }
+
+    BIGNUM *compute_g_exp_k_inv_mod_q(const BIGNUM *g, const BIGNUM *k, const BIGNUM *q, BN_CTX *ctx)
+    {
+        BIGNUM *k_inv = BN_new();  // k^-1
+        BIGNUM *result = BN_new(); 
+
+        if (!BN_mod_inverse(k_inv, k, q, ctx))
+        {
+            std::cerr << "Error: k is not invertible modulo q" << std::endl;
+            BN_free(k_inv);
+            BN_free(result);
+            return nullptr;
+        }
+
+        if (!BN_mod_exp(result, g, k_inv, q, ctx))
+        {
+            std::cerr << "Error in modular exponentiation" << std::endl;
+            BN_free(k_inv);
+            BN_free(result);
+            return nullptr;
+        }
+
+        BN_free(k_inv);
+        return result;
+    }
+};
+
+    
