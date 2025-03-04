@@ -528,6 +528,128 @@ public:
         BN_free(k_inv);
         return result;
     }
+
+    json combineSignatureShares(const json &participants_data, const std::vector<int> &signingGroup, const BIGNUM *messageHash) 
+    {
+        
+        BIGNUM *finalSignature = BN_new();
+        BN_CTX *ctx = BN_CTX_new();
+
+        BIGNUM *K = BN_new();
+        // BIGNUM *R = BN_new();
+
+        for (int i : signingGroup)
+        {
+            BIGNUM *ki = BN_new();
+            if (!BN_hex2bn(&ki, participants_data[i]["ki"].get<std::string>().c_str())) {
+                std::cerr << "Error: Failed to convert ki to BIGNUM" << std::endl;
+                BN_free(ki);
+                return nullptr; // Handle error appropriately
+            }
+            BN_add(K, K, ki); // Add the value of ki to K
+            BN_free(ki);
+
+        }
+
+        auto generator = EC_POINT_new(group);
+        EC_POINT_copy(generator, EC_GROUP_get0_generator(group));
+
+        BIGNUM *k_inv = BN_new();
+        if (!BN_mod_inverse(k_inv, K, order, ctx)) {
+            std::cerr << "Error: k is not invertible modulo q." << std::endl;
+            BN_free(k_inv);
+            return nullptr; // Handle error appropriately
+        }
+
+        EC_POINT *R = EC_POINT_new(group);
+        if (!EC_POINT_mul(group, R, nullptr, generator, k_inv, ctx)) {
+            std::cerr << "Error: Failed to compute R = k_inv * generator." << std::endl;
+            BN_free(k_inv);
+            EC_POINT_free(R);
+            return nullptr; // Handle error appropriately
+        }
+
+        BN_free(k_inv);
+        // Now `R` contains the result point.
+
+        // R = compute_g_exp_k_inv_mod_q(generator, K, order, ctx);
+            
+        BIGNUM* Rx = BN_new();  // x-coordinate of R
+        BIGNUM* r = BN_new();  // Result: H0(R) = Rx mod q
+
+        // Extract x-coordinate of the point R
+        if (!EC_POINT_get_affine_coordinates_GFp(group, R, Rx, nullptr, ctx)) {
+            std::cerr << "Error: Unable to extract x-coordinate of R." << std::endl;
+            BN_free(Rx);
+            BN_free(r);
+            return nullptr;
+        }
+
+        // Compute H0(R) = Rx mod q
+        if (!BN_mod(r, Rx, order, ctx)) {
+            std::cerr << "Error: Modular reduction failed." << std::endl;
+            BN_free(Rx);
+            BN_free(r);
+            return nullptr;
+        }
+
+        for (int i : signingGroup)
+        {
+            BIGNUM *s_i = BN_new();
+            BIGNUM *sigma_i = BN_new();
+            BN_hex2bn(&sigma_i, participants_data[i]["sigma_i"].get<std::string>().c_str());
+
+            //si = mki + rσi
+            std::string ki_str = participants_data[i]["ki"].get<std::string>();
+            BIGNUM *ki = BN_new();
+            if (!BN_hex2bn(&ki, ki_str.c_str())) {
+                std::cerr << "Error: Failed to convert ki to BIGNUM." << std::endl;
+                BN_free(ki);
+                return; // Handle error appropriately
+            }
+
+            BN_mod_mul(s_i, messageHash, ki, order, ctx); // Perform modular multiplication
+            BN_free(ki); // Free the temporary BIGNUM
+
+            //temp = rσi
+            BIGNUM *temp = BN_new();
+            BN_mod_mul(temp, r, sigma_i, order, ctx);
+            //si = si + temp
+            BN_mod_add(s_i, s_i, temp, order, ctx);
+            participants_data[i]["s_i"] = BN_bn2hex(s_i);
+            BN_free(s_i);
+            BN_free(sigma_i);
+            BN_free(temp);
+
+        }
+
+        for (int i : signingGroup)
+        {
+            // s = Σsi mod q
+            std::string s_i_str = participants_data[i]["s_i"].get<std::string>();
+            BIGNUM *s_i = BN_new();
+            if (!BN_hex2bn(&s_i, s_i_str.c_str())) {
+                std::cerr << "Error: Failed to convert s_i to BIGNUM." << std::endl;
+                BN_free(s_i);
+                return; // Handle error appropriately
+            }
+
+            BN_mod_add(finalSignature, finalSignature, s_i, order, ctx); // Perform modular addition
+            BN_free(s_i); // Free the temporary BIGNUM
+        }
+
+        // Clean up and return result
+        BN_free(Rx);
+        BN_CTX_free(ctx);
+
+        json finalSig;
+        finalSig["r"] = BN_bn2hex(r);
+        finalSig["s"] = BN_bn2hex(finalSignature);
+
+        return finalSig;
+    }
 };
+
+
 
     
