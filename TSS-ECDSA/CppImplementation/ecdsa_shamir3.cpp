@@ -651,5 +651,72 @@ public:
 };
 
 
+class ThresholdECDSA
+{
+private:
+    std::unique_ptr<ThresholdKeyGen> keyGen;
+    std::unique_ptr<ThresholdSigning> signing;
+    json participantsData;
+    json publicKeyData;
+    int t;
+    int n;
+
+public:
+    ThresholdECDSA(int threshold, int total_participants)
+        : t(threshold), n(total_participants)
+    {
+        keyGen = std::make_unique<ThresholdKeyGen>(t, n);
+        signing = std::make_unique<ThresholdSigning>(t, n);
+    }
+
+    void generateKeys()
+    {
+        for (int i = 1; i <= n; i++)
+        {
+            json data = keyGen->generate_participant_data(i);
+            participantsData[i] = data;
+        }
+        publicKeyData = keyGen->combine_shares(participantsData);
+    }
+
+    json signMessage(const std::string &message, const std::vector<int> &signingGroup)
+    {
+        BIGNUM *msgHash = hash_message(message);
+        std::cout << "Message hash: " << BN_bn2hex(msgHash) << std::endl;
+
+        std::cout << "Using public key: " << publicKeyData["public_key"].get<std::string>() << std::endl;
+
+        signing->generateSignatureShares(participantsData, signingGroup);
+        auto finalSig = signing->combineSignatureShares(participantsData, signingGroup, msgHash);
+
+        BN_free(msgHash);
+        return finalSig;
+    }
+
+    bool verifySignature(const std::string &message, const json &signature)
+    {
+        SignatureVerification verifier(publicKeyData["public_key"].get<std::string>());
+        return verifier.verifySignature(message, signature);
+    }
+};
+
+int main()
+{
+    ThresholdECDSA ecdsa(2, 3);
+    ecdsa.generateKeys();
+
+    std::vector<int> signingGroup = {1, 2};
+    std::string message = "hello world from threshold ecdsa";
+
+    // std::cout << "Signing message: " << message << std::endl;
+    auto signature = ecdsa.signMessage(message, signingGroup);
+
+    // std::cout << "Generated signature: " << signature.dump(2) << std::endl;
+
+    bool isValid = ecdsa.verifySignature(message, signature);
+    std::cout << "Signature is " << (isValid ? "valid" : "invalid") << std::endl;
+
+    return 0;
+}
 
     
