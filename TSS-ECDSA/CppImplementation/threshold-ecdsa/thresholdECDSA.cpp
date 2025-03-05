@@ -347,3 +347,63 @@ ThresholdECDSA:: ~ThresholdECDSA()
     EC_POINT_free(generator);
     EC_GROUP_free((EC_GROUP *)group);
 }
+
+int main()
+{
+    ThresholdECDSA ecdsa(2, 3);
+
+    EC_POINT * publicKey = ecdsa.generateKeys();
+    
+    std::vector<int> signingGroup = {0, 1};
+    EC_GROUP *group = EC_GROUP_new_by_curve_name(NID_secp256k1);
+
+    // Hash the message
+    const char *message = "hello world from threshold ecdsa";
+    size_t message_length = strlen(message);
+    std::cout << "Message: " << message << std::endl;
+
+
+    unsigned char hash[SHA256_DIGEST_LENGTH];
+    SHA256((unsigned char*)message, message_length, hash);
+    BIGNUM *msgHash = BN_bin2bn(hash, SHA256_DIGEST_LENGTH, NULL);
+
+    // Sign message
+    ECDSA_SIG *signature = ecdsa.signMessage(message, message_length, signingGroup, msgHash);
+
+    // Convert EC_POINT to bytes for EVP
+    size_t publicKey_len;
+    unsigned char *publicKey_bytes = NULL;
+    publicKey_len = EC_POINT_point2buf(group, publicKey, POINT_CONVERSION_UNCOMPRESSED, &publicKey_bytes, NULL);
+
+
+    // Create EVP_PKEY context
+    EVP_PKEY *pkey = EVP_PKEY_new();
+    EVP_PKEY_CTX *kctx = EVP_PKEY_CTX_new_id(EVP_PKEY_EC, NULL);
+    EVP_PKEY_keygen_init(kctx);
+    EVP_PKEY_CTX_set_ec_paramgen_curve_nid(kctx, NID_secp256k1);
+    EVP_PKEY_set1_encoded_public_key(pkey, publicKey_bytes, publicKey_len);
+
+    // Convert signature to DER
+    unsigned char *sig_der = NULL;
+    int sig_der_len = i2d_ECDSA_SIG(signature, &sig_der);
+
+    // Verify signature
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new(pkey, NULL);
+    EVP_PKEY_verify_init(ctx);
+    int verify_status = EVP_PKEY_verify(ctx, sig_der, sig_der_len, hash, SHA256_DIGEST_LENGTH);
+
+    std::cout << "Verification status: " << (verify_status == 1 ? "Success" : "Failed") << std::endl;
+
+    // Cleanup
+    EC_GROUP_free(group);
+    OPENSSL_free(sig_der);
+    OPENSSL_free(publicKey_bytes);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(kctx);
+    EVP_PKEY_free(pkey);
+    //BN_free(msgHash);
+    ECDSA_SIG_free(signature);
+    EC_POINT_free(publicKey);
+
+    return 0;
+}
