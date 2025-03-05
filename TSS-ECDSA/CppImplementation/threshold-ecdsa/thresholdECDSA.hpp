@@ -72,3 +72,34 @@ struct Signature
     //   BN_free(s);
     //}
 };
+class ThresholdECDSA {
+private:
+    const EC_GROUP *group;
+    BIGNUM *order;
+    EC_POINT *generator;
+    EC_POINT *publicKey;
+    int t;
+    int n;
+    std::vector<Participant*> participants;
+
+    BIGNUM* generate_random_zq();
+    std::vector<BIGNUM *> generate_polynomial_t(BIGNUM *ui);
+    BIGNUM *evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x);
+    void generate_participant_data(int participant_id, Participant &data);
+    void generateSignatureShares(const std::vector<int> &signingGroup);
+    ECDSA_SIG * combineSignatureShares(const std::vector<int> &signingGroup, const BIGNUM *messageHash);
+    void saveToFile(const std::string &filename);
+
+
+public:
+    ThresholdECDSA(int threshold, int total_participants);
+    EC_POINT * generateKeys();
+    ECDSA_SIG * signMessage(const char *message, size_t message_length, const std::vector<int> &signingGroup,BIGNUM* msgHash);
+    //bool verifySignature(const std::string &messageHex, const json &signature);
+    ~ThresholdECDSA();
+
+};
+
+#endif // THRESHOLDECDSA_HPP
+
+
