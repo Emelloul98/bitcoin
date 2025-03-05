@@ -73,4 +73,27 @@ ThresholdECDSA:: ThresholdECDSA(int threshold, int total_participants)
         participants.push_back(data);
     }
 }
+void ThresholdECDSA:: generate_participant_data(int participant_id, Participant &participant)
+{
+    BN_CTX *ctx = BN_CTX_new();
+    participant.participant_id = participant_id;
+    BN_rand_range(participant.k, order);
+    BN_rand_range(participant.gamma, order);
+    BN_rand_range(participant.u, order);
+
+    std::vector<BIGNUM *> polynomial = generate_polynomial_t(participant.u);
+
+    participant.y = EC_POINT_new(group);
+    EC_POINT_mul(group, participant.y, participant.u, nullptr, nullptr, ctx);
+
+    for (int i = 1; i <= n; i++)
+    {
+        BIGNUM *share = evaluate_polynomial(polynomial, i);
+        participant.shares.push_back(share);
+    }
+
+    for (auto coeff : polynomial)
+        BN_free(coeff);
+    BN_CTX_free(ctx);
+}
 
