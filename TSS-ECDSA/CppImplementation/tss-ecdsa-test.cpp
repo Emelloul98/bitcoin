@@ -724,3 +724,25 @@ public:
         
     }
 };
+
+int main()
+{
+    ThresholdECDSA ecdsa(2, 3);
+    ecdsa.generateKeys();
+
+    std::vector<int> signingGroup = {0, 1};
+    std::string message = "hello world from threshold ecdsa";
+
+    // std::cout << "Signing message: " << message << std::endl;
+    auto signature = ecdsa.signMessage(message, signingGroup);
+
+    // std::cout << "Generated signature: " << signature.dump(2) << std::endl;
+
+    bool isValid = ecdsa.verifySignature(message, signature);
+    std::cout << "Signature is " << (isValid ? "valid" : "invalid") << std::endl;
+
+    ecdsa.saveToFile("participants_data.json");
+
+    return 0;
+}
+
