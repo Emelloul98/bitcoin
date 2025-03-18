@@ -16,10 +16,10 @@ BIGNUM *simpleECDSA::generate_random_zq()
     return res;
 }
 
-std::vector<BIGNUM *> ThresholdECDSA::generate_polynomial_t(BIGNUM *ui)
+std::vector<BIGNUM *> simpleECDSA::generate_polynomial_t(BIGNUM *x) 
 {
     std::vector<BIGNUM *> coefficients;
-    coefficients.push_back(BN_dup(ui));
+    coefficients.push_back(BN_dup(x));
     for (int i = 1; i < t; i++)
     {
         coefficients.push_back(generate_random_zq());
@@ -27,14 +27,14 @@ std::vector<BIGNUM *> ThresholdECDSA::generate_polynomial_t(BIGNUM *ui)
     return coefficients;
 }
 
-BIGNUM *ThresholdECDSA::evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x)
-{
-    BIGNUM *result = BN_new();  
-    BIGNUM *temp = BN_new();    
-    BIGNUM *x_power = BN_new(); 
-    BN_CTX *ctx = BN_CTX_new(); 
 
-    BN_zero(result); 
+BIGNUM *simpleECDSA::evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x)
+{
+    BIGNUM *result = BN_new();  // Final result
+    BIGNUM *temp = BN_new();    // Temporary variable for intermediate computations
+    BIGNUM *x_power = BN_new(); // Holds x^i
+
+    BN_zero(result); // Initialize result to 0
     BN_one(x_power); // x^0 = 1
 
     for (size_t i = 0; i < coefficients.size(); i++)
@@ -51,35 +51,32 @@ BIGNUM *ThresholdECDSA::evaluate_polynomial(const std::vector<BIGNUM *> &coeffic
 
     BN_free(temp);
     BN_free(x_power);
-    BN_CTX_free(ctx);
 
     return result;
 }
 
-ThresholdECDSA:: ThresholdECDSA(int threshold, int total_participants)
+simpleECDSA:: simpleECDSA(int threshold, int total_participants)
     : t(threshold), n(total_participants)
 {
     group = EC_GROUP_new_by_curve_name(NID_secp256k1);
     order = BN_new();
     EC_GROUP_get_order(group, order, nullptr);
     publicKey = EC_POINT_new(group);
-    
-   
-    //if (!EC_POINT_copy(publicKey, EC_GROUP_get0_generator(group))) {
-    //    std:: cout << "ctxv";
-    //}
 
     EC_POINT_set_to_infinity(group, publicKey);
     generator = EC_POINT_new(group);
     EC_POINT_copy(generator, EC_GROUP_get0_generator(group));
+    ctx = BN_CTX_new();
 
-    for (int i = 1; i <= n; i++)
+    for (int i = 1; i <= total_participants; i++)
     {
-        Participant* data = new Participant();
-        generate_participant_data(i, *data);
-        participants.push_back(data);
+        Participant* participant = new Participant();
+        participant->participant_id = i;
+        participants.push_back(participant);
     }
+
 }
+
 void ThresholdECDSA:: generate_participant_data(int participant_id, Participant &participant)
 {
     BN_CTX *ctx = BN_CTX_new();
