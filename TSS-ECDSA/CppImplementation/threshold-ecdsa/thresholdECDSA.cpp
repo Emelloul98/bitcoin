@@ -1,13 +1,20 @@
 #include "ThresholdECDSA.hpp"
 
 
-BIGNUM *ThresholdECDSA::generate_random_zq()
+BIGNUM *simpleECDSA::generate_random_zq()
 {
     BIGNUM *res = BN_new();
-    BN_rand_range(res, order);
+    BIGNUM *ord = BN_new();
+    // Copy the value of 'order' to 'ord'
+    BN_copy(ord, order);
+    // Subtract 1 from ord (this modifies ord in place)
+    BN_sub_word(ord, 1);
+    // Generate a random number in the range [0, order-2]
+    BN_rand_range(res, ord);
+    // Ensure the result is in the desired range [1, order-1] by adding 1
+    BN_add_word(res, 1);
     return res;
 }
-
 
 std::vector<BIGNUM *> ThresholdECDSA::generate_polynomial_t(BIGNUM *ui)
 {
