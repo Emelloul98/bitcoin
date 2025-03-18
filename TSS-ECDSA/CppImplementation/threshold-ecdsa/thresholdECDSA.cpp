@@ -73,7 +73,9 @@ BIGNUM *simpleECDSA::generate_random_zq()
 std::vector<BIGNUM *> simpleECDSA::generate_polynomial_t(BIGNUM *x) 
 {
     std::vector<BIGNUM *> coefficients;
+    // The first coefficient is a duplicate of the input value x
     coefficients.push_back(BN_dup(x));
+     // Generate random coefficients for the polynomial (t-1 coefficients)
     for (int i = 1; i < t; i++)
     {
         coefficients.push_back(generate_random_zq());
@@ -111,16 +113,21 @@ BIGNUM *simpleECDSA::evaluate_polynomial(const std::vector<BIGNUM *> &coefficien
 simpleECDSA:: simpleECDSA(int threshold, int total_participants)
     : t(threshold), n(total_participants)
 {
+    // Initialize the elliptic curve group using secp256k1
     group = EC_GROUP_new_by_curve_name(NID_secp256k1);
+    // Create a new BIGNUM for storing the order of the curve
     order = BN_new();
     EC_GROUP_get_order(group, order, nullptr);
+    // Initialize the public key as a new EC_POINT and set it to infinity
     publicKey = EC_POINT_new(group);
-
     EC_POINT_set_to_infinity(group, publicKey);
+
+    // Initialize the generator of the elliptic curve group
     generator = EC_POINT_new(group);
     EC_POINT_copy(generator, EC_GROUP_get0_generator(group));
+    // Create a BN_CTX object for temporary variables in BIGNUM operations
     ctx = BN_CTX_new();
-
+    // Initialize participants and assign unique IDs
     for (int i = 1; i <= total_participants; i++)
     {
         Participant* participant = new Participant();
@@ -131,15 +138,17 @@ simpleECDSA:: simpleECDSA(int threshold, int total_participants)
 }
 
 void simpleECDSA:: generateKeys(){ // TODO: should be offline phase
+    // Generate a random private key in Z_q
     BIGNUM *privateKey = generate_random_zq();
+    // Compute the public key as publicKey = privateKey * generator
     EC_POINT_mul(group, publicKey, privateKey, nullptr, nullptr, ctx);
-
+    // Generate a secret-sharing polynomial with the private key as the constant term
     std::vector<BIGNUM *> polynomial = generate_polynomial_t(privateKey);
-
+    // Distribute shares of the polynomial to participants
     for (int i = 0; i < n; i++){
         participants[i]->x = evaluate_polynomial(polynomial, i + 1);
     }
-
+    // Free allocated memory for polynomial coefficients and private key
     for (auto coeff : polynomial)
         BN_free(coeff);
     BN_free(privateKey);
@@ -148,14 +157,17 @@ void simpleECDSA:: generateKeys(){ // TODO: should be offline phase
 
 Signature* simpleECDSA:: signMessage(const std::string& message, const std::vector<int> &signingGroup)
 {
+    // Compute hash of the message (maps string to Z_q)
     BIGNUM * msgHash = H(message);
     Signature* sig = new Signature();
 
+    // Each signing participant generates random secret values k and y
     for(int i : signingGroup){
         participants[i]->k = generate_random_zq();
         participants[i]->y = generate_random_zq();
     }
 
+    // Compute the sum ky = sum(w_i) where w_i = sum(k_i * y_j) for all j in signingGroup
     BIGNUM* ky = BN_new();
     BN_zero(ky);
 
@@ -175,6 +187,7 @@ Signature* simpleECDSA:: signMessage(const std::string& message, const std::vect
     }
     BN_free(w);
 
+    // Compute modular inverse of ky (i.e., ky^-1 mod q)
     BIGNUM* delta_inv = BN_new();
 
     // Compute ky^-1 mod q using OpenSSL's BN_mod_inverse
@@ -184,19 +197,22 @@ Signature* simpleECDSA:: signMessage(const std::string& message, const std::vect
         return nullptr;
     }
 
+    // Compute the elliptic curve point R using delta_inv
     EC_POINT* R = computeR(signingGroup, delta_inv);
     BN_free(delta_inv);
 
+    // Compute r = H0(R), the first component of the signature
     sig->r = H0(R);
     EC_POINT_free(R);
 
     // Compute sigma = ki * lambda_i*xi
     compute_sigma(signingGroup);
 
+    // Compute final signature component s
     sig->s = BN_new();
     BN_zero(sig->s);
 
-    // partialSignature
+    // Compute the partial signature contributions from each participant
     for (int i : signingGroup) {
         BIGNUM* temp = BN_new();
         BN_mod_mul(temp, sig->r, participants[i]->sigma, order, ctx);
@@ -290,7 +306,10 @@ EC_POINT* simpleECDSA:: computeR(const std::vector<int> &signingGroup, BIGNUM* d
 
 
 bool simpleECDSA:: verifySignature(const std::string& message, Signature* signature){
+
+    // Compute hash of the message (maps string to Z_q)
     BIGNUM * msgHash = H(message);
+    // Compute modular inverse of s: s_inv = s^-1 mod q
     BIGNUM * s_inv = BN_new();
     if (!BN_mod_inverse(s_inv, signature->s, order, ctx)) {
         std::cerr << "Error computing modular inverse!" << std::endl;
@@ -298,26 +317,32 @@ bool simpleECDSA:: verifySignature(const std::string& message, Signature* signat
         return false;
     }
 
+    // Create required variables for elliptic curve computations
     BIGNUM* exp = BN_new();
     EC_POINT* R0 = EC_POINT_new(group);
     EC_POINT* R1 = EC_POINT_new(group);
 
 
-
+    // Compute R0 = (msgHash * s_inv) * G
     BN_mod_mul(exp, msgHash, s_inv, order, ctx);
     EC_POINT_mul(group, R0, exp, NULL, NULL, ctx);
+    // Compute R1 = (r * s_inv) * publicKey
     BN_mod_mul(exp, signature->r, s_inv, order, ctx);
     EC_POINT_mul(group, R1, NULL, publicKey, exp, ctx);
+    // Compute R0 = R0 + R1
     EC_POINT_add(group, R0, R0, R1, ctx); // TODO: is it add?
 
+    // Free allocated memory
     BN_free(s_inv);
     BN_free(exp);
     BN_free(msgHash);
     EC_POINT_free(R1);
 
+    // Compute r' = H0(R0)
     BIGNUM* r = H0(R0);
     EC_POINT_free(R0);
 
+    // Check if r' matches the given signature r
     bool res = BN_cmp(r, signature->r) == 0;
     BN_free(r);
     return res;
