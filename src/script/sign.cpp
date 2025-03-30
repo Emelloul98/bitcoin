@@ -17,6 +17,7 @@
 #include <uint256.h>
 #include <util/translation.h>
 #include <util/vector.h>
+#include "simpleECDSA.hpp" // ADDED
 
 typedef std::vector<unsigned char> valtype;
 
@@ -34,7 +35,64 @@ MutableTransactionSignatureCreator::MutableTransactionSignatureCreator(const CMu
 {
 }
 
-bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& address, const CScript& scriptCode, SigVersion sigversion) const
+
+
+// ADDED start
+bool MutableTransactionSignatureCreator::CreateSig(
+    const SigningProvider& provider,
+    std::vector<unsigned char>& vchSig,
+    const CKeyID& address,
+    const CScript& scriptCode,
+    SigVersion sigversion
+) const {
+
+    CKey key;
+    if (!provider.GetKey(address, key))
+        return false;
+    // 1. Compute the hash to sign
+    uint256 hash = SignatureHash(scriptCode, m_txto, nIn, nHashType, amount, sigversion);
+    std::string message = hash.GetHex();  // Convert hash to hex string
+
+    // 2. Create a signature using simpleECDSA
+    simpleECDSA signer(2, 3); // 2 = threshold, 3 = total participants
+    signer.generateKeys();  // Generate the keys needed for signing
+
+    std::vector<int> signingGroup = {0, 1};  // Specify the signing participants (e.g., indices of participants)
+    Signature* sig = signer.signMessage(message, signingGroup);  // Sign the message using the defined group
+
+    if (!sig) return false;  // If the signature is null, return false
+
+    // 3. Convert r and s to vector<unsigned char> for use in the signature
+    auto BNToVector = [](BIGNUM* bn) -> std::vector<unsigned char> {
+        int num_bytes = BN_num_bytes(bn);  // Get the byte size of the BIGNUM
+        std::vector<unsigned char> vec(num_bytes);
+        BN_bn2bin(bn, vec.data());  // Convert BIGNUM to binary and store it in the vector
+        return vec;
+    };
+
+    std::vector<unsigned char> r = BNToVector(sig->r);  // Convert r to vector<unsigned char>
+    std::vector<unsigned char> s = BNToVector(sig->s);  // Convert s to vector<unsigned char>
+
+    // 4. Build the DER-encoded signature (vchSig)
+    vchSig.clear();
+    vchSig.push_back(0x30);  // SEQUENCE tag for DER encoding
+    std::vector<unsigned char> combined;
+    combined.push_back(0x02);  // INTEGER tag for r
+    combined.push_back(r.size());  // Size of r
+    combined.insert(combined.end(), r.begin(), r.end());  // Add r to the combined vector
+    combined.push_back(0x02);  // INTEGER tag for s
+    combined.push_back(s.size());  // Size of s
+    combined.insert(combined.end(), s.begin(), s.end());  // Add s to the combined vector
+    vchSig.push_back(combined.size());  // Length of the combined r and s
+    vchSig.insert(vchSig.end(), combined.begin(), combined.end());  // Add the combined r and s to vchSig
+
+    // 5. Append the sighash byte (to indicate the type of signature)
+    vchSig.push_back((unsigned char)nHashType);
+
+    return true;  // Return true if the signature is successfully created
+}
+
+/*bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& address, const CScript& scriptCode, SigVersion sigversion) const
 {
     assert(sigversion == SigVersion::BASE || sigversion == SigVersion::WITNESS_V0);
 
@@ -57,7 +115,7 @@ bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provid
         return false;
     vchSig.push_back((unsigned char)hashtype);
     return true;
-}
+}*/
 
 bool MutableTransactionSignatureCreator::CreateSchnorrSig(const SigningProvider& provider, std::vector<unsigned char>& sig, const XOnlyPubKey& pubkey, const uint256* leaf_hash, const uint256* merkle_root, SigVersion sigversion) const
 {
