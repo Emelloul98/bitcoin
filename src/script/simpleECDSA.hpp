@@ -55,7 +55,7 @@ struct Signature
     BIGNUM *r;
     BIGNUM *s;
 
-    //~Signature() TODO
+    //~Signature() TOD O
     //{
     //    BN_free(r);
     //   BN_free(s);

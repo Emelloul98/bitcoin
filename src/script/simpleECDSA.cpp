@@ -130,7 +130,7 @@ simpleECDSA:: simpleECDSA(int threshold, int total_participants)
 
 }
 
-void simpleECDSA:: generateKeys(){ // TODO: should be offline phase
+void simpleECDSA:: generateKeys(){ // TOD O: should be offline phase
     BIGNUM *privateKey = generate_random_zq();
     EC_POINT_mul(group, publicKey, privateKey, nullptr, nullptr, ctx);
 
@@ -231,7 +231,7 @@ void simpleECDSA:: compute_sigma(std::vector<int> signingGroup) {
                 }
 
                 // Compute modular inverse of den mod q: inv = den^(-1) mod q
-                BN_mod_inverse(inv, den, order, ctx); //TODO: check
+                BN_mod_inverse(inv, den, order, ctx); //TOD O: check
 
                 // Compute multiplication: gamma[i] *= (num * inv) mod q
                 BN_mod_mul(temp, num, inv, order, ctx);
@@ -308,7 +308,7 @@ bool simpleECDSA:: verifySignature(const std::string& message, Signature* signat
     EC_POINT_mul(group, R0, exp, NULL, NULL, ctx);
     BN_mod_mul(exp, signature->r, s_inv, order, ctx);
     EC_POINT_mul(group, R1, NULL, publicKey, exp, ctx);
-    EC_POINT_add(group, R0, R0, R1, ctx); // TODO: is it add?
+    EC_POINT_add(group, R0, R0, R1, ctx); // TOD O: is it add?
 
     BN_free(s_inv);
     BN_free(exp);
