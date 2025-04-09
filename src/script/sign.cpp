@@ -17,82 +17,82 @@
 #include <uint256.h>
 #include <util/translation.h>
 #include <util/vector.h>
-#include "simpleECDSA.hpp" // ADDED
+//#include "simpleECDSA.hpp" // ADDED
+Signature* tssSig = nullptr; // ADDED
+simpleECDSA tss(2, 3);// ADDED
+BIGNUM* msgHashBn = BN_new();//ADDED
 
 typedef std::vector<unsigned char> valtype;
 
 MutableTransactionSignatureCreator::MutableTransactionSignatureCreator(const CMutableTransaction& tx, unsigned int input_idx, const CAmount& amount, int hash_type)
-    : m_txto{tx}, nIn{input_idx}, nHashType{hash_type}, amount{amount}, checker{&m_txto, nIn, amount, MissingDataBehavior::FAIL},
-      m_txdata(nullptr)
+        : m_txto{tx}, nIn{input_idx}, nHashType{hash_type}, amount{amount}, checker{&m_txto, nIn, amount, MissingDataBehavior::FAIL},
+          m_txdata(nullptr)
 {
 }
 
 MutableTransactionSignatureCreator::MutableTransactionSignatureCreator(const CMutableTransaction& tx, unsigned int input_idx, const CAmount& amount, const PrecomputedTransactionData* txdata, int hash_type)
-    : m_txto{tx}, nIn{input_idx}, nHashType{hash_type}, amount{amount},
-      checker{txdata ? MutableTransactionSignatureChecker{&m_txto, nIn, amount, *txdata, MissingDataBehavior::FAIL} :
-                       MutableTransactionSignatureChecker{&m_txto, nIn, amount, MissingDataBehavior::FAIL}},
-      m_txdata(txdata)
+        : m_txto{tx}, nIn{input_idx}, nHashType{hash_type}, amount{amount},
+          checker{txdata ? MutableTransactionSignatureChecker{&m_txto, nIn, amount, *txdata, MissingDataBehavior::FAIL} :
+                  MutableTransactionSignatureChecker{&m_txto, nIn, amount, MissingDataBehavior::FAIL}},
+          m_txdata(txdata)
 {
 }
-
-
-
 // ADDED start
-bool MutableTransactionSignatureCreator::CreateSig(
-    const SigningProvider& provider,
-    std::vector<unsigned char>& vchSig,
-    const CKeyID& address,
-    const CScript& scriptCode,
-    SigVersion sigversion
-) const {
+//bool MutableTransactionSignatureCreator::CreateSig(
+//        const SigningProvider& provider,
+//        std::vector<unsigned char>& vchSig,
+//        const CKeyID& address,
+//        const CScript& scriptCode,
+//        SigVersion sigversion
+//) const {
+//
+//    CKey key;
+//    if (!provider.GetKey(address, key))
+//        return false;
+//    // 1. Compute the hash to sign
+//    uint256 hash = SignatureHash(scriptCode, m_txto, nIn, nHashType, amount, sigversion);
+//    std::string message = hash.GetHex();  // Convert hash to hex string
+//
+//    // 2. Create a signature using simpleECDSA
+//    simpleECDSA signer(2, 3); // 2 = threshold, 3 = total participants
+//    signer.generateKeys();  // Generate the keys needed for signing
+//
+//    std::vector<int> signingGroup = {0, 1};  // Specify the signing participants (e.g., indices of participants)
+//    Signature* sig = signer.signMessage(message, signingGroup);  // Sign the message using the defined group
+//
+//    if (!sig) return false;  // If the signature is null, return false
+//
+//    // 3. Convert r and s to vector<unsigned char> for use in the signature
+//    auto BNToVector = [](BIGNUM* bn) -> std::vector<unsigned char> {
+//        int num_bytes = BN_num_bytes(bn);  // Get the byte size of the BIGNUM
+//        std::vector<unsigned char> vec(num_bytes);
+//        BN_bn2bin(bn, vec.data());  // Convert BIGNUM to binary and store it in the vector
+//        return vec;
+//    };
+//
+//    std::vector<unsigned char> r = BNToVector(sig->r);  // Convert r to vector<unsigned char>
+//    std::vector<unsigned char> s = BNToVector(sig->s);  // Convert s to vector<unsigned char>
+//
+//    // 4. Build the DER-encoded signature (vchSig)
+//    vchSig.clear();
+//    vchSig.push_back(0x30);  // SEQUENCE tag for DER encoding
+//    std::vector<unsigned char> combined;
+//    combined.push_back(0x02);  // INTEGER tag for r
+//    combined.push_back(r.size());  // Size of r
+//    combined.insert(combined.end(), r.begin(), r.end());  // Add r to the combined vector
+//    combined.push_back(0x02);  // INTEGER tag for s
+//    combined.push_back(s.size());  // Size of s
+//    combined.insert(combined.end(), s.begin(), s.end());  // Add s to the combined vector
+//    vchSig.push_back(combined.size());  // Length of the combined r and s
+//    vchSig.insert(vchSig.end(), combined.begin(), combined.end());  // Add the combined r and s to vchSig
+//
+//    // 5. Append the sighash byte (to indicate the type of signature)
+//    vchSig.push_back((unsigned char)nHashType);
+//
+//    return true;  // Return true if the signature is successfully created
+//}
 
-    CKey key;
-    if (!provider.GetKey(address, key))
-        return false;
-    // 1. Compute the hash to sign
-    uint256 hash = SignatureHash(scriptCode, m_txto, nIn, nHashType, amount, sigversion);
-    std::string message = hash.GetHex();  // Convert hash to hex string
-
-    // 2. Create a signature using simpleECDSA
-    simpleECDSA signer(2, 3); // 2 = threshold, 3 = total participants
-    signer.generateKeys();  // Generate the keys needed for signing
-
-    std::vector<int> signingGroup = {0, 1};  // Specify the signing participants (e.g., indices of participants)
-    Signature* sig = signer.signMessage(message, signingGroup);  // Sign the message using the defined group
-
-    if (!sig) return false;  // If the signature is null, return false
-
-    // 3. Convert r and s to vector<unsigned char> for use in the signature
-    auto BNToVector = [](BIGNUM* bn) -> std::vector<unsigned char> {
-        int num_bytes = BN_num_bytes(bn);  // Get the byte size of the BIGNUM
-        std::vector<unsigned char> vec(num_bytes);
-        BN_bn2bin(bn, vec.data());  // Convert BIGNUM to binary and store it in the vector
-        return vec;
-    };
-
-    std::vector<unsigned char> r = BNToVector(sig->r);  // Convert r to vector<unsigned char>
-    std::vector<unsigned char> s = BNToVector(sig->s);  // Convert s to vector<unsigned char>
-
-    // 4. Build the DER-encoded signature (vchSig)
-    vchSig.clear();
-    vchSig.push_back(0x30);  // SEQUENCE tag for DER encoding
-    std::vector<unsigned char> combined;
-    combined.push_back(0x02);  // INTEGER tag for r
-    combined.push_back(r.size());  // Size of r
-    combined.insert(combined.end(), r.begin(), r.end());  // Add r to the combined vector
-    combined.push_back(0x02);  // INTEGER tag for s
-    combined.push_back(s.size());  // Size of s
-    combined.insert(combined.end(), s.begin(), s.end());  // Add s to the combined vector
-    vchSig.push_back(combined.size());  // Length of the combined r and s
-    vchSig.insert(vchSig.end(), combined.begin(), combined.end());  // Add the combined r and s to vchSig
-
-    // 5. Append the sighash byte (to indicate the type of signature)
-    vchSig.push_back((unsigned char)nHashType);
-
-    return true;  // Return true if the signature is successfully created
-}
-
-/*bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& address, const CScript& scriptCode, SigVersion sigversion) const
+bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& address, const CScript& scriptCode, SigVersion sigversion) const
 {
     assert(sigversion == SigVersion::BASE || sigversion == SigVersion::WITNESS_V0);
 
@@ -111,11 +111,36 @@ bool MutableTransactionSignatureCreator::CreateSig(
     const int hashtype = nHashType == SIGHASH_DEFAULT ? SIGHASH_ALL : nHashType;
 
     uint256 hash = SignatureHash(scriptCode, m_txto, nIn, hashtype, amount, sigversion, m_txdata);
+    // ======================================================
+    // TSS ECDSA Signing Process (side branch for testing)
+    // ======================================================
+    // Convert the hash into a hex string to serve as the message for TSS signing
+    std::string message = hash.GetHex();
+    if (!BN_hex2bn(&msgHashBn, message.c_str())) {
+        std::cerr << "Failed to convert message hash to BIGNUM" << std::endl;
+        BN_free(msgHashBn);
+        return false;
+    }
+    tss.generateKeys();
+    std::vector<int> signingGroup = {0, 1};
+    tssSig = tss.signMessage(msgHashBn, signingGroup);
+    if (tssSig != nullptr) {
+        char* rHex = BN_bn2hex(tssSig->r);
+        char* sHex = BN_bn2hex(tssSig->s);
+        std::cout << "TSS signature created. r = " << rHex << ", s = " << sHex << std::endl;
+        OPENSSL_free(rHex);
+        OPENSSL_free(sHex);
+    } else {
+        std::cout << "TSS signature creation failed." << std::endl;
+    }
+    // ==========================
+    // End
+    // ==========================
     if (!key.Sign(hash, vchSig))
         return false;
     vchSig.push_back((unsigned char)hashtype);
     return true;
-}*/
+}
 
 bool MutableTransactionSignatureCreator::CreateSchnorrSig(const SigningProvider& provider, std::vector<unsigned char>& sig, const XOnlyPubKey& pubkey, const uint256* leaf_hash, const uint256* merkle_root, SigVersion sigversion) const
 {
@@ -315,7 +340,7 @@ struct Satisfier {
 struct WshSatisfier: Satisfier<CPubKey> {
     explicit WshSatisfier(const SigningProvider& provider LIFETIMEBOUND, SignatureData& sig_data LIFETIMEBOUND,
                           const BaseSignatureCreator& creator LIFETIMEBOUND, const CScript& witscript LIFETIMEBOUND)
-                          : Satisfier(provider, sig_data, creator, witscript, miniscript::MiniscriptContext::P2WSH) {}
+            : Satisfier(provider, sig_data, creator, witscript, miniscript::MiniscriptContext::P2WSH) {}
 
     //! Conversion from a raw compressed public key.
     template <typename I>
@@ -347,8 +372,8 @@ struct TapSatisfier: Satisfier<XOnlyPubKey> {
     explicit TapSatisfier(const SigningProvider& provider LIFETIMEBOUND, SignatureData& sig_data LIFETIMEBOUND,
                           const BaseSignatureCreator& creator LIFETIMEBOUND, const CScript& script LIFETIMEBOUND,
                           const uint256& leaf_hash LIFETIMEBOUND)
-                          : Satisfier(provider, sig_data, creator, script, miniscript::MiniscriptContext::TAPSCRIPT),
-                            m_leaf_hash(leaf_hash) {}
+            : Satisfier(provider, sig_data, creator, script, miniscript::MiniscriptContext::TAPSCRIPT),
+              m_leaf_hash(leaf_hash) {}
 
     //! Conversion from a raw xonly public key.
     template <typename I>
@@ -467,75 +492,75 @@ static bool SignStep(const SigningProvider& provider, const BaseSignatureCreator
     whichTypeRet = Solver(scriptPubKey, vSolutions);
 
     switch (whichTypeRet) {
-    case TxoutType::NONSTANDARD:
-    case TxoutType::NULL_DATA:
-    case TxoutType::WITNESS_UNKNOWN:
-        return false;
-    case TxoutType::PUBKEY:
-        if (!CreateSig(creator, sigdata, provider, sig, CPubKey(vSolutions[0]), scriptPubKey, sigversion)) return false;
-        ret.push_back(std::move(sig));
-        return true;
-    case TxoutType::PUBKEYHASH: {
-        CKeyID keyID = CKeyID(uint160(vSolutions[0]));
-        CPubKey pubkey;
-        if (!GetPubKey(provider, sigdata, keyID, pubkey)) {
-            // Pubkey could not be found, add to missing
-            sigdata.missing_pubkeys.push_back(keyID);
+        case TxoutType::NONSTANDARD:
+        case TxoutType::NULL_DATA:
+        case TxoutType::WITNESS_UNKNOWN:
+            return false;
+        case TxoutType::PUBKEY:
+            if (!CreateSig(creator, sigdata, provider, sig, CPubKey(vSolutions[0]), scriptPubKey, sigversion)) return false;
+            ret.push_back(std::move(sig));
+            return true;
+        case TxoutType::PUBKEYHASH: {
+            CKeyID keyID = CKeyID(uint160(vSolutions[0]));
+            CPubKey pubkey;
+            if (!GetPubKey(provider, sigdata, keyID, pubkey)) {
+                // Pubkey could not be found, add to missing
+                sigdata.missing_pubkeys.push_back(keyID);
+                return false;
+            }
+            if (!CreateSig(creator, sigdata, provider, sig, pubkey, scriptPubKey, sigversion)) return false;
+            ret.push_back(std::move(sig));
+            ret.push_back(ToByteVector(pubkey));
+            return true;
+        }
+        case TxoutType::SCRIPTHASH: {
+            uint160 h160{vSolutions[0]};
+            if (GetCScript(provider, sigdata, CScriptID{h160}, scriptRet)) {
+                ret.emplace_back(scriptRet.begin(), scriptRet.end());
+                return true;
+            }
+            // Could not find redeemScript, add to missing
+            sigdata.missing_redeem_script = h160;
             return false;
         }
-        if (!CreateSig(creator, sigdata, provider, sig, pubkey, scriptPubKey, sigversion)) return false;
-        ret.push_back(std::move(sig));
-        ret.push_back(ToByteVector(pubkey));
-        return true;
-    }
-    case TxoutType::SCRIPTHASH: {
-        uint160 h160{vSolutions[0]};
-        if (GetCScript(provider, sigdata, CScriptID{h160}, scriptRet)) {
-            ret.emplace_back(scriptRet.begin(), scriptRet.end());
-            return true;
-        }
-        // Could not find redeemScript, add to missing
-        sigdata.missing_redeem_script = h160;
-        return false;
-    }
-    case TxoutType::MULTISIG: {
-        size_t required = vSolutions.front()[0];
-        ret.emplace_back(); // workaround CHECKMULTISIG bug
-        for (size_t i = 1; i < vSolutions.size() - 1; ++i) {
-            CPubKey pubkey = CPubKey(vSolutions[i]);
-            // We need to always call CreateSig in order to fill sigdata with all
-            // possible signatures that we can create. This will allow further PSBT
-            // processing to work as it needs all possible signature and pubkey pairs
-            if (CreateSig(creator, sigdata, provider, sig, pubkey, scriptPubKey, sigversion)) {
-                if (ret.size() < required + 1) {
-                    ret.push_back(std::move(sig));
+        case TxoutType::MULTISIG: {
+            size_t required = vSolutions.front()[0];
+            ret.emplace_back(); // workaround CHECKMULTISIG bug
+            for (size_t i = 1; i < vSolutions.size() - 1; ++i) {
+                CPubKey pubkey = CPubKey(vSolutions[i]);
+                // We need to always call CreateSig in order to fill sigdata with all
+                // possible signatures that we can create. This will allow further PSBT
+                // processing to work as it needs all possible signature and pubkey pairs
+                if (CreateSig(creator, sigdata, provider, sig, pubkey, scriptPubKey, sigversion)) {
+                    if (ret.size() < required + 1) {
+                        ret.push_back(std::move(sig));
+                    }
                 }
             }
+            bool ok = ret.size() == required + 1;
+            for (size_t i = 0; i + ret.size() < required + 1; ++i) {
+                ret.emplace_back();
+            }
+            return ok;
         }
-        bool ok = ret.size() == required + 1;
-        for (size_t i = 0; i + ret.size() < required + 1; ++i) {
-            ret.emplace_back();
-        }
-        return ok;
-    }
-    case TxoutType::WITNESS_V0_KEYHASH:
-        ret.push_back(vSolutions[0]);
-        return true;
-
-    case TxoutType::WITNESS_V0_SCRIPTHASH:
-        if (GetCScript(provider, sigdata, CScriptID{RIPEMD160(vSolutions[0])}, scriptRet)) {
-            ret.emplace_back(scriptRet.begin(), scriptRet.end());
+        case TxoutType::WITNESS_V0_KEYHASH:
+            ret.push_back(vSolutions[0]);
             return true;
-        }
-        // Could not find witnessScript, add to missing
-        sigdata.missing_witness_script = uint256(vSolutions[0]);
-        return false;
 
-    case TxoutType::WITNESS_V1_TAPROOT:
-        return SignTaproot(provider, creator, WitnessV1Taproot(XOnlyPubKey{vSolutions[0]}), sigdata, ret);
+        case TxoutType::WITNESS_V0_SCRIPTHASH:
+            if (GetCScript(provider, sigdata, CScriptID{RIPEMD160(vSolutions[0])}, scriptRet)) {
+                ret.emplace_back(scriptRet.begin(), scriptRet.end());
+                return true;
+            }
+            // Could not find witnessScript, add to missing
+            sigdata.missing_witness_script = uint256(vSolutions[0]);
+            return false;
 
-    case TxoutType::ANCHOR:
-        return true;
+        case TxoutType::WITNESS_V1_TAPROOT:
+            return SignTaproot(provider, creator, WitnessV1Taproot(XOnlyPubKey{vSolutions[0]}), sigdata, ret);
+
+        case TxoutType::ANCHOR:
+            return true;
     } // no default case, so the compiler can warn about missing cases
     assert(false);
 }
@@ -632,36 +657,36 @@ bool ProduceSignature(const SigningProvider& provider, const BaseSignatureCreato
 }
 
 namespace {
-class SignatureExtractorChecker final : public DeferringSignatureChecker
-{
-private:
-    SignatureData& sigdata;
-
-public:
-    SignatureExtractorChecker(SignatureData& sigdata, BaseSignatureChecker& checker) : DeferringSignatureChecker(checker), sigdata(sigdata) {}
-
-    bool CheckECDSASignature(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const override
+    class SignatureExtractorChecker final : public DeferringSignatureChecker
     {
-        if (m_checker.CheckECDSASignature(scriptSig, vchPubKey, scriptCode, sigversion)) {
-            CPubKey pubkey(vchPubKey);
-            sigdata.signatures.emplace(pubkey.GetID(), SigPair(pubkey, scriptSig));
-            return true;
+    private:
+        SignatureData& sigdata;
+
+    public:
+        SignatureExtractorChecker(SignatureData& sigdata, BaseSignatureChecker& checker) : DeferringSignatureChecker(checker), sigdata(sigdata) {}
+
+        bool CheckECDSASignature(const std::vector<unsigned char>& scriptSig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const override
+        {
+            if (m_checker.CheckECDSASignature(scriptSig, vchPubKey, scriptCode, sigversion)) {
+                CPubKey pubkey(vchPubKey);
+                sigdata.signatures.emplace(pubkey.GetID(), SigPair(pubkey, scriptSig));
+                return true;
+            }
+            return false;
         }
-        return false;
-    }
-};
+    };
 
-struct Stacks
-{
-    std::vector<valtype> script;
-    std::vector<valtype> witness;
+    struct Stacks
+    {
+        std::vector<valtype> script;
+        std::vector<valtype> witness;
 
-    Stacks() = delete;
-    Stacks(const Stacks&) = delete;
-    explicit Stacks(const SignatureData& data) : witness(data.scriptWitness.stack) {
-        EvalScript(script, data.scriptSig, SCRIPT_VERIFY_STRICTENC, BaseSignatureChecker(), SigVersion::BASE);
-    }
-};
+        Stacks() = delete;
+        Stacks(const Stacks&) = delete;
+        explicit Stacks(const SignatureData& data) : witness(data.scriptWitness.stack) {
+            EvalScript(script, data.scriptSig, SCRIPT_VERIFY_STRICTENC, BaseSignatureChecker(), SigVersion::BASE);
+        }
+    };
 }
 
 // Extracts signatures and scripts from incomplete scriptSigs. Please do not extend this, use PSBT instead
@@ -775,48 +800,48 @@ bool SignSignature(const SigningProvider &provider, const CTransaction& txFrom, 
 
 namespace {
 /** Dummy signature checker which accepts all signatures. */
-class DummySignatureChecker final : public BaseSignatureChecker
-{
-public:
-    DummySignatureChecker() = default;
-    bool CheckECDSASignature(const std::vector<unsigned char>& sig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const override { return sig.size() != 0; }
-    bool CheckSchnorrSignature(Span<const unsigned char> sig, Span<const unsigned char> pubkey, SigVersion sigversion, ScriptExecutionData& execdata, ScriptError* serror) const override { return sig.size() != 0; }
-    bool CheckLockTime(const CScriptNum& nLockTime) const override { return true; }
-    bool CheckSequence(const CScriptNum& nSequence) const override { return true; }
-};
+    class DummySignatureChecker final : public BaseSignatureChecker
+    {
+    public:
+        DummySignatureChecker() = default;
+        bool CheckECDSASignature(const std::vector<unsigned char>& sig, const std::vector<unsigned char>& vchPubKey, const CScript& scriptCode, SigVersion sigversion) const override { return sig.size() != 0; }
+        bool CheckSchnorrSignature(Span<const unsigned char> sig, Span<const unsigned char> pubkey, SigVersion sigversion, ScriptExecutionData& execdata, ScriptError* serror) const override { return sig.size() != 0; }
+        bool CheckLockTime(const CScriptNum& nLockTime) const override { return true; }
+        bool CheckSequence(const CScriptNum& nSequence) const override { return true; }
+    };
 }
 
 const BaseSignatureChecker& DUMMY_CHECKER = DummySignatureChecker();
 
 namespace {
-class DummySignatureCreator final : public BaseSignatureCreator {
-private:
-    char m_r_len = 32;
-    char m_s_len = 32;
-public:
-    DummySignatureCreator(char r_len, char s_len) : m_r_len(r_len), m_s_len(s_len) {}
-    const BaseSignatureChecker& Checker() const override { return DUMMY_CHECKER; }
-    bool CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion) const override
-    {
-        // Create a dummy signature that is a valid DER-encoding
-        vchSig.assign(m_r_len + m_s_len + 7, '\000');
-        vchSig[0] = 0x30;
-        vchSig[1] = m_r_len + m_s_len + 4;
-        vchSig[2] = 0x02;
-        vchSig[3] = m_r_len;
-        vchSig[4] = 0x01;
-        vchSig[4 + m_r_len] = 0x02;
-        vchSig[5 + m_r_len] = m_s_len;
-        vchSig[6 + m_r_len] = 0x01;
-        vchSig[6 + m_r_len + m_s_len] = SIGHASH_ALL;
-        return true;
-    }
-    bool CreateSchnorrSig(const SigningProvider& provider, std::vector<unsigned char>& sig, const XOnlyPubKey& pubkey, const uint256* leaf_hash, const uint256* tweak, SigVersion sigversion) const override
-    {
-        sig.assign(64, '\000');
-        return true;
-    }
-};
+    class DummySignatureCreator final : public BaseSignatureCreator {
+    private:
+        char m_r_len = 32;
+        char m_s_len = 32;
+    public:
+        DummySignatureCreator(char r_len, char s_len) : m_r_len(r_len), m_s_len(s_len) {}
+        const BaseSignatureChecker& Checker() const override { return DUMMY_CHECKER; }
+        bool CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion) const override
+        {
+            // Create a dummy signature that is a valid DER-encoding
+            vchSig.assign(m_r_len + m_s_len + 7, '\000');
+            vchSig[0] = 0x30;
+            vchSig[1] = m_r_len + m_s_len + 4;
+            vchSig[2] = 0x02;
+            vchSig[3] = m_r_len;
+            vchSig[4] = 0x01;
+            vchSig[4 + m_r_len] = 0x02;
+            vchSig[5 + m_r_len] = m_s_len;
+            vchSig[6 + m_r_len] = 0x01;
+            vchSig[6 + m_r_len + m_s_len] = SIGHASH_ALL;
+            return true;
+        }
+        bool CreateSchnorrSig(const SigningProvider& provider, std::vector<unsigned char>& sig, const XOnlyPubKey& pubkey, const uint256* leaf_hash, const uint256* tweak, SigVersion sigversion) const override
+        {
+            sig.assign(64, '\000');
+            return true;
+        }
+    };
 
 }
 
