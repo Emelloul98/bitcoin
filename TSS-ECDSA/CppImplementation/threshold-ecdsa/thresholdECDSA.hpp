@@ -14,43 +14,6 @@
 #include <boost/asio.hpp>
 #include <map>
 
-//struct Participant
-//{
-//    BIGNUM *y;
-//    BIGNUM *k;
-//    BIGNUM *x;
-//    BIGNUM *w;
-//
-//    BIGNUM *sigma;
-//    BIGNUM *s;
-//    BIGNUM *gamma;
-//    int participant_id;
-//
-//
-//    Participant() {
-//        y = BN_new();
-//        k = BN_new();
-//        x = BN_new();
-//        w = BN_new();
-//        sigma = BN_new();
-//        s = BN_new();
-//        gamma = BN_new();
-//        BN_one(gamma);
-//        participant_id = -1;
-//    }
-//
-//    ~Participant() {
-//        BN_free(y);
-//        BN_free(k);
-//        BN_free(x);
-//        BN_free(w);
-//        BN_free(sigma);
-//        BN_free(s);
-//        BN_free(gamma);
-//
-//    }
-//};
-
 struct Signature
 {
     BIGNUM *r;
@@ -67,7 +30,6 @@ private:
     BN_CTX *ctx;
     int t;
     int n;
-//    std::vector<Participant*> participants;
     std::string bn_to_hex(BIGNUM* bn);
     BIGNUM* read_bn_from_file(int participantIndex, const std::string& key);
     bool append_bn_to_file(int participantIndex, const std::string& key, const BIGNUM* value);
