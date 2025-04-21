@@ -11,55 +11,50 @@
 #include <openssl/sha.h>
 #include <openssl/err.h>
 #include <cstring>
+#include <boost/asio.hpp>
+#include <map>
 
-
-struct Participant
-{
-    BIGNUM *y;
-    BIGNUM *k;
-    BIGNUM *x;
-    BIGNUM *w;
-
-    BIGNUM *sigma;
-    BIGNUM *s;
-    BIGNUM *gamma;
-    int participant_id;
-
-
-    Participant() {
-        y = BN_new();
-        k = BN_new(); 
-        x = BN_new();
-        w = BN_new();
-        sigma = BN_new();
-        s = BN_new();
-        gamma = BN_new();
-        BN_one(gamma);
-        participant_id = -1;
-     }
-
-     ~Participant() {
-        BN_free(y);
-        BN_free(k);
-        BN_free(x);
-        BN_free(w);
-        BN_free(sigma);
-        BN_free(s);
-        BN_free(gamma);
-        
-     }
-};
+//struct Participant
+//{
+//    BIGNUM *y;
+//    BIGNUM *k;
+//    BIGNUM *x;
+//    BIGNUM *w;
+//
+//    BIGNUM *sigma;
+//    BIGNUM *s;
+//    BIGNUM *gamma;
+//    int participant_id;
+//
+//
+//    Participant() {
+//        y = BN_new();
+//        k = BN_new();
+//        x = BN_new();
+//        w = BN_new();
+//        sigma = BN_new();
+//        s = BN_new();
+//        gamma = BN_new();
+//        BN_one(gamma);
+//        participant_id = -1;
+//    }
+//
+//    ~Participant() {
+//        BN_free(y);
+//        BN_free(k);
+//        BN_free(x);
+//        BN_free(w);
+//        BN_free(sigma);
+//        BN_free(s);
+//        BN_free(gamma);
+//
+//    }
+//};
 
 struct Signature
 {
     BIGNUM *r;
     BIGNUM *s;
-
-    //~Signature() TODO
-    //{
-    //    BN_free(r);
-    //   BN_free(s);
-    //}
 };
 
 
@@ -70,17 +65,17 @@ private:
     EC_POINT *generator;
     EC_POINT *publicKey;
     BN_CTX *ctx;
-
     int t;
     int n;
-    std::vector<Participant*> participants;
-
+//    std::vector<Participant*> participants;
+    std::string bn_to_hex(BIGNUM* bn);
+    BIGNUM* read_bn_from_file(int participantIndex, const std::string& key);
+    bool append_bn_to_file(int participantIndex, const std::string& key, const BIGNUM* value);
     BIGNUM *H(const std::string& input);
     BIGNUM *H0(const EC_POINT* point);
-
-    BIGNUM* generate_random_zq();
     std::vector<BIGNUM *> generate_polynomial_t(BIGNUM *x);
     BIGNUM *evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x);
+    BIGNUM* generate_random_zq();
     void generate_participants_data(const std::vector<int> &signingGroup);
     EC_POINT* computeR(const std::vector<int> &signingGroup, BIGNUM* delta_inv);
     void compute_sigma(std::vector<int> signingGroup);
@@ -88,8 +83,9 @@ private:
 public:
     simpleECDSA(int threshold, int total_participants);
     void generateKeys();
-    Signature* signMessage(const std::string& message, const std::vector<int> &signingGroup);
-    bool verifySignature(const std::string& message, Signature* signature);
+    Signature* signMessage(BIGNUM* msgHash, const std::vector<int> &signingGroup);
+    bool verifySignature(BIGNUM* msgHash, Signature* signature);
+    BIGNUM* sha256_to_bn(const std::string& message);
 //    ~simpleECDSA();
 
 };
