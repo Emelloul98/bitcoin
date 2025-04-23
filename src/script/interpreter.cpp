@@ -1635,19 +1635,20 @@ uint256 SignatureHash(const CScript& scriptCode, const T& txTo, unsigned int nIn
 template <class T>
 bool GenericTransactionSignatureChecker<T>::VerifyECDSASignature(const std::vector<unsigned char>& vchSig, const CPubKey& pubkey, const uint256& sighash) const
 {
+    // ADDED
     // ============================
     // simpleECDSA verification
     // ============================
-    if (tssSig != nullptr) {
-        // Debugging: Verify the size of sighash
-        if (sighash.size() != 32) {
-            std::cerr << "Error: sighash size is not 32 bytes!" << std::endl;
-            return false;
-        }
-        bool isValid = tss.verifySignature(msgHashBn, tssSig);
-        printf("TSS signature verification result: %s\n", isValid ? "VALID" : "INVALID");
-        BN_free(msgHashBn);
-    }
+//    if (tssSig != nullptr) {
+//        // Debugging: Verify the size of sighash
+//        if (sighash.size() != 32) {
+//            std::cerr << "Error: sighash size is not 32 bytes!" << std::endl;
+//            return false;
+//        }
+//        bool isValid = tss.verifySignature(msgHashBn, tssSig);
+//        printf("TSS signature verification result: %s\n", isValid ? "VALID" : "INVALID");
+//        BN_free(msgHashBn);
+//    }
     // ============================
     // End.
     // ============================

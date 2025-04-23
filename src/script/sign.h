@@ -14,10 +14,10 @@
 #include <script/keyorigin.h>
 #include <script/signingprovider.h>
 #include <uint256.h>
-#include "simpleECDSA.hpp" // ADDED
-extern Signature* tssSig; // ADDED
-extern simpleECDSA tss; // ADDED
-extern BIGNUM* msgHashBn;// ADDED
+//#include "simpleECDSA.hpp" // ADDED
+//extern Signature* tssSig; // ADDED
+//extern simpleECDSA tss; // ADDED
+//extern BIGNUM* msgHashBn;// ADDED
 class CKey;
 class CKeyID;
 class CScript;

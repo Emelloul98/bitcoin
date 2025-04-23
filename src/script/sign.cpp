@@ -18,9 +18,9 @@
 #include <util/translation.h>
 #include <util/vector.h>
 //#include "simpleECDSA.hpp" // ADDED
-Signature* tssSig = nullptr; // ADDED
-simpleECDSA tss(2, 3);// ADDED
-BIGNUM* msgHashBn = BN_new();//ADDED
+//Signature* tssSig = nullptr; // ADDED
+//simpleECDSA tss(2, 3);// ADDED
+//BIGNUM* msgHashBn = BN_new();//ADDED
 
 typedef std::vector<unsigned char> valtype;
 
@@ -115,24 +115,24 @@ bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provid
     // TSS ECDSA Signing Process (side branch for testing)
     // ======================================================
     // Convert the hash into a hex string to serve as the message for TSS signing
-    std::string message = hash.GetHex();
-    if (!BN_hex2bn(&msgHashBn, message.c_str())) {
-        std::cerr << "Failed to convert message hash to BIGNUM" << std::endl;
-        BN_free(msgHashBn);
-        return false;
-    }
-    tss.generateKeys();
-    std::vector<int> signingGroup = {0, 1};
-    tssSig = tss.signMessage(msgHashBn, signingGroup);
-    if (tssSig != nullptr) {
-        char* rHex = BN_bn2hex(tssSig->r);
-        char* sHex = BN_bn2hex(tssSig->s);
-        std::cout << "TSS signature created. r = " << rHex << ", s = " << sHex << std::endl;
-        OPENSSL_free(rHex);
-        OPENSSL_free(sHex);
-    } else {
-        std::cout << "TSS signature creation failed." << std::endl;
-    }
+//    std::string message = hash.GetHex();
+//    if (!BN_hex2bn(&msgHashBn, message.c_str())) {
+//        std::cerr << "Failed to convert message hash to BIGNUM" << std::endl;
+//        BN_free(msgHashBn);
+//        return false;
+//    }
+//    tss.generateKeys();
+//    std::vector<int> signingGroup = {0, 1};
+//    tssSig = tss.signMessage(msgHashBn, signingGroup);
+//    if (tssSig != nullptr) {
+//        char* rHex = BN_bn2hex(tssSig->r);
+//        char* sHex = BN_bn2hex(tssSig->s);
+//        std::cout << "TSS signature created. r = " << rHex << ", s = " << sHex << std::endl;
+//        OPENSSL_free(rHex);
+//        OPENSSL_free(sHex);
+//    } else {
+//        std::cout << "TSS signature creation failed." << std::endl;
+//    }
     // ==========================
     // End
     // ==========================
