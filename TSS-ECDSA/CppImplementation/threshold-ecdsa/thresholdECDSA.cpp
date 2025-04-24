@@ -110,3 +110,35 @@ std::vector<BIGNUM *> simpleECDSA::generate_polynomial_t(BIGNUM *x)
     }
     return coefficients;
 }
+
+/*
+ *  evaluate_polynomial function:
+ *  1.Calculates the value of the given polynomial at the point x.
+ *  2.return the result f(x).
+ */
+BIGNUM *simpleECDSA::evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x)
+{
+    BIGNUM *result = BN_new();  // Final result
+    BIGNUM *temp = BN_new();    // Temporary variable for intermediate computations
+    BIGNUM *x_power = BN_new(); // Holds x^i
+
+    BN_zero(result); // Initialize result to 0
+    BN_one(x_power); // x^0 = 1
+
+    for (size_t i = 0; i < coefficients.size(); i++)
+    {
+        // temp = coefficients[i] * x_power mod order
+        BN_mod_mul(temp, coefficients[i], x_power, order, ctx);
+
+        // result = result + temp mod order
+        BN_mod_add(result, result, temp, order, ctx);
+
+        // x_power = x_power * x mod order
+        BN_mul_word(x_power, x); // x_power *= x
+    }
+
+    BN_free(temp);
+    BN_free(x_power);
+
+    return result;
+}
