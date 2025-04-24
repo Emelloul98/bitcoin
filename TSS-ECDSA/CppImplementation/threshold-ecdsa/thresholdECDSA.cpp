@@ -93,3 +93,20 @@ BIGNUM *simpleECDSA::generate_random_zq()
     BN_add_word(res, 1);
     return res;
 }
+
+/*
+ * generate_polynomial_t function:
+ * 1.Gets a secret x
+ * 2.Generate a random polynomial of degree t-1 over the field Zq
+ * 3.returns the polynomial coefficients.
+*/
+std::vector<BIGNUM *> simpleECDSA::generate_polynomial_t(BIGNUM *x)
+{
+    std::vector<BIGNUM *> coefficients;
+    coefficients.push_back(BN_dup(x));
+    for (int i = 1; i < t; i++)
+    {
+        coefficients.push_back(generate_random_zq());
+    }
+    return coefficients;
+}
