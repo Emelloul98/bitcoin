@@ -74,3 +74,22 @@ void simpleECDSA::generateKeys()
         BN_free(coeff);
     BN_free(privateKey);
 }
+
+/*
+ * generate_random_zq function:
+ * 1.Returns a random integer in the range [1,q-1].
+*/
+BIGNUM *simpleECDSA::generate_random_zq()
+{
+    BIGNUM *res = BN_new();
+    BIGNUM *ord = BN_new();
+    // Copy the value of 'order' to 'ord'
+    BN_copy(ord, order);
+    // Subtract 1 from ord (this modifies ord in place)
+    BN_sub_word(ord, 1);
+    // Generate a random number in the range [0, order-2]
+    BN_rand_range(res, ord);
+    // Ensure the result is in the desired range [1, order-1] by adding 1
+    BN_add_word(res, 1);
+    return res;
+}
