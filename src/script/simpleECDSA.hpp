@@ -28,7 +28,7 @@ struct Participant
 
     Participant() {
         y = BN_new();
-        k = BN_new(); 
+        k = BN_new();
         x = BN_new();
         w = BN_new();
         sigma = BN_new();
@@ -46,7 +46,7 @@ struct Participant
         BN_free(sigma);
         BN_free(s);
         BN_free(gamma);
-        
+
      }
 };
 
@@ -87,9 +87,9 @@ private:
 
 public:
     simpleECDSA(int threshold, int total_participants);
-    void generateKeys();
-    Signature* signMessage(const std::string& message, const std::vector<int> &signingGroup);
-    bool verifySignature(const std::string& message, Signature* signature);
+    void generateKeys(EC_POINT* pubKey, BIGNUM *privateKey);
+    Signature* signMessage(BIGNUM* message, const std::vector<int> &signingGroup);
+    bool verifySignature(BIGNUM* message, Signature* signature);
     EC_POINT* getPublicKey(){
         return publicKey;
     }

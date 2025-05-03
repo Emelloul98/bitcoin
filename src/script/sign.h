@@ -14,7 +14,7 @@
 #include <script/keyorigin.h>
 #include <script/signingprovider.h>
 #include <uint256.h>
-
+extern bool g_use_custom_signature;
 class CKey;
 class CKeyID;
 class CScript;
@@ -51,6 +51,8 @@ public:
     const BaseSignatureChecker& Checker() const override { return checker; }
     bool CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& keyid, const CScript& scriptCode, SigVersion sigversion) const override;
     bool CreateSchnorrSig(const SigningProvider& provider, std::vector<unsigned char>& sig, const XOnlyPubKey& pubkey, const uint256* leaf_hash, const uint256* merkle_root, SigVersion sigversion) const override;
+	bool CreateCustomSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& address, const CScript& scriptCode, SigVersion sigversion) const;
+
 };
 
 /** A signature checker that accepts all signatures */

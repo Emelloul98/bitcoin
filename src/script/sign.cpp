@@ -19,6 +19,9 @@
 #include <util/vector.h>
 #include "simpleECDSA.hpp" // ADDED
 
+bool g_use_custom_signature = true;
+
+
 typedef std::vector<unsigned char> valtype;
 
 MutableTransactionSignatureCreator::MutableTransactionSignatureCreator(const CMutableTransaction& tx, unsigned int input_idx, const CAmount& amount, int hash_type)
@@ -35,10 +38,35 @@ MutableTransactionSignatureCreator::MutableTransactionSignatureCreator(const CMu
 {
 }
 
+/*void print_sig(const std::vector<unsigned char>& sig_with_hashtype, const std::string& label) {
+    const unsigned char* p = sig_with_hashtype.data();
+    ECDSA_SIG* sig = d2i_ECDSA_SIG(nullptr, &p, sig_with_hashtype.size() - 1); // בלי ה־hashtype האחרון
+    if (!sig) {
+        std::cerr << label << ": failed to parse DER" << std::endl;
+        return;
+    }
+
+    const BIGNUM* r;
+    const BIGNUM* s;
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+    ECDSA_SIG_get0(sig, &r, &s);
+#else
+    r = sig->r;
+    s = sig->s;
+#endif
+
+    char* r_hex = BN_bn2hex(r);
+    char* s_hex = BN_bn2hex(s);
+    std::cout << label << ":\nr = " << r_hex << "\ns = " << s_hex << "\n" << std::endl;
+    OPENSSL_free(r_hex);
+    OPENSSL_free(s_hex);
+    ECDSA_SIG_free(sig);
+}*/
+
 
 
 // ADDED start
-bool MutableTransactionSignatureCreator::CreateSig(
+bool MutableTransactionSignatureCreator::CreateCustomSig(
     const SigningProvider& provider,
     std::vector<unsigned char>& vchSig,
     const CKeyID& address,
@@ -46,56 +74,74 @@ bool MutableTransactionSignatureCreator::CreateSig(
     SigVersion sigversion
 ) const {
 
+    assert(sigversion == SigVersion::BASE || sigversion == SigVersion::WITNESS_V0);
+
     CKey key;
     if (!provider.GetKey(address, key))
         return false;
-    // 1. Compute the hash to sign
-    uint256 hash = SignatureHash(scriptCode, m_txto, nIn, nHashType, amount, sigversion);
-    std::string message = hash.GetHex();  // Convert hash to hex string
 
-    // 2. Create a signature using simpleECDSA
+    // Signing with uncompressed keys is disabled in witness scripts
+    if (sigversion == SigVersion::WITNESS_V0 && !key.IsCompressed())
+        return false;
+
+    // Signing without known amount does not work in witness scripts.
+    if (sigversion == SigVersion::WITNESS_V0 && !MoneyRange(amount)) return false;
+
+    // BASE/WITNESS_V0 signatures don't support explicit SIGHASH_DEFAULT, use SIGHASH_ALL instead.
+    const int hashtype = nHashType == SIGHASH_DEFAULT ? SIGHASH_ALL : nHashType;
+
+
+    uint256 hash = SignatureHash(scriptCode, m_txto, nIn, hashtype, amount, sigversion, m_txdata);
+    BIGNUM* bn_hash = BN_bin2bn(hash.begin(), 32, nullptr);
+
+    BIGNUM* priv_bn = BN_new();
+    BN_bin2bn(reinterpret_cast<const unsigned char*>(key.begin()), 32, priv_bn);
+
+    CPubKey pubkey = key.GetPubKey();
+    const unsigned char* pub_data = pubkey.data();
+    size_t pub_len = pubkey.size();
+
+    EC_GROUP* group = EC_GROUP_new_by_curve_name(NID_secp256k1);
+    EC_POINT* pub_point = EC_POINT_new(group);
+    if (!EC_POINT_oct2point(group, pub_point, pub_data, pub_len, nullptr)) return false;
+
+    //Create a signature using simpleECDSA
     simpleECDSA signer(2, 3); // 2 = threshold, 3 = total participants
-    signer.generateKeys();  // Generate the keys needed for signing
+    signer.generateKeys(pub_point, priv_bn);  // Generate the keys needed for signing
 
-    std::vector<int> signingGroup = {0, 1};  // Specify the signing participants (e.g., indices of participants)
-    Signature* sig = signer.signMessage(message, signingGroup);  // Sign the message using the defined group
+    std::vector<int> signingGroup = {0, 1};  // Specify the signing participants
+    Signature* sig = signer.signMessage(bn_hash, signingGroup);  // Sign the message
+
+    bool res = signer.verifySignature(bn_hash, sig);
+    std::cout << res << std::endl;
 
     if (!sig) return false;  // If the signature is null, return false
 
-    // 3. Convert r and s to vector<unsigned char> for use in the signature
-    auto BNToVector = [](BIGNUM* bn) -> std::vector<unsigned char> {
-        int num_bytes = BN_num_bytes(bn);  // Get the byte size of the BIGNUM
-        std::vector<unsigned char> vec(num_bytes);
-        BN_bn2bin(bn, vec.data());  // Convert BIGNUM to binary and store it in the vector
-        return vec;
-    };
+    // יצירת מבנה OpenSSL מהחתימה שלך
+    ECDSA_SIG* ossl_sig = ECDSA_SIG_new();
+    ECDSA_SIG_set0(ossl_sig, BN_dup(sig->r), BN_dup(sig->s));  // לא מעתיקים – מעבירים בעלות
 
-    std::vector<unsigned char> r = BNToVector(sig->r);  // Convert r to vector<unsigned char>
-    std::vector<unsigned char> s = BNToVector(sig->s);  // Convert s to vector<unsigned char>
+    // המרה ל־DER
+    unsigned char der_sig[72];  // מקסימום גודל חתימת DER
+    unsigned int der_len = i2d_ECDSA_SIG(ossl_sig, nullptr);  // שלב 1: לברר גודל
 
-    // 4. Build the DER-encoded signature (vchSig)
-    vchSig.clear();
-    vchSig.push_back(0x30);  // SEQUENCE tag for DER encoding
-    std::vector<unsigned char> combined;
-    combined.push_back(0x02);  // INTEGER tag for r
-    combined.push_back(r.size());  // Size of r
-    combined.insert(combined.end(), r.begin(), r.end());  // Add r to the combined vector
-    combined.push_back(0x02);  // INTEGER tag for s
-    combined.push_back(s.size());  // Size of s
-    combined.insert(combined.end(), s.begin(), s.end());  // Add s to the combined vector
-    vchSig.push_back(combined.size());  // Length of the combined r and s
-    vchSig.insert(vchSig.end(), combined.begin(), combined.end());  // Add the combined r and s to vchSig
+    unsigned char* p = der_sig;
+    der_len = i2d_ECDSA_SIG(ossl_sig, &p);  // שלב 2: כתיבה ל־buffer
 
-    // 5. Append the sighash byte (to indicate the type of signature)
-    vchSig.push_back((unsigned char)nHashType);
+    // שמירה ב־vchSig
+    vchSig.assign(der_sig, der_sig + der_len);
+    vchSig.push_back((unsigned char)hashtype);
 
     return true;  // Return true if the signature is successfully created
 }
 
-/*bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& address, const CScript& scriptCode, SigVersion sigversion) const
+bool MutableTransactionSignatureCreator::CreateSig(const SigningProvider& provider, std::vector<unsigned char>& vchSig, const CKeyID& address, const CScript& scriptCode, SigVersion sigversion) const
 {
     assert(sigversion == SigVersion::BASE || sigversion == SigVersion::WITNESS_V0);
 
+	if (g_use_custom_signature) {
+        return CreateCustomSig(provider, vchSig, address, scriptCode, sigversion);
+    }
     CKey key;
     if (!provider.GetKey(address, key))
         return false;
@@ -115,7 +161,7 @@ bool MutableTransactionSignatureCreator::CreateSig(
         return false;
     vchSig.push_back((unsigned char)hashtype);
     return true;
-}*/
+}
 
 bool MutableTransactionSignatureCreator::CreateSchnorrSig(const SigningProvider& provider, std::vector<unsigned char>& sig, const XOnlyPubKey& pubkey, const uint256* leaf_hash, const uint256* merkle_root, SigVersion sigversion) const
 {
@@ -564,6 +610,7 @@ bool ProduceSignature(const SigningProvider& provider, const BaseSignatureCreato
     std::vector<valtype> result;
     TxoutType whichType;
     bool solved = SignStep(provider, creator, fromPubKey, result, whichType, SigVersion::BASE, sigdata);
+
     bool P2SH = false;
     CScript subscript;
 
@@ -627,7 +674,16 @@ bool ProduceSignature(const SigningProvider& provider, const BaseSignatureCreato
     sigdata.scriptSig = PushAll(result);
 
     // Test solution
-    sigdata.complete = solved && VerifyScript(sigdata.scriptSig, fromPubKey, &sigdata.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS, creator.Checker());
+    //sigdata.complete = solved && VerifyScript(sigdata.scriptSig, fromPubKey, &sigdata.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS, creator.Checker());
+    bool valid = VerifyScript(sigdata.scriptSig, fromPubKey, &sigdata.scriptWitness, STANDARD_SCRIPT_VERIFY_FLAGS, creator.Checker());
+
+    if (!valid) {
+        std::cout << "VerifyScript failed: " << std::endl;
+    }else{
+        std::cout << "VerifyScript success" << std::endl;
+    }
+
+    sigdata.complete = solved && valid;
     return sigdata.complete;
 }
 
@@ -756,10 +812,16 @@ bool SignSignature(const SigningProvider &provider, const CScript& fromPubKey, C
 {
     assert(nIn < txTo.vin.size());
 
+	// Turn on custom signature
+    g_use_custom_signature = true;
+
     MutableTransactionSignatureCreator creator(txTo, nIn, amount, nHashType);
 
     bool ret = ProduceSignature(provider, creator, fromPubKey, sig_data);
     UpdateInput(txTo.vin.at(nIn), sig_data);
+
+	 // Turn it off again
+    g_use_custom_signature = false;
     return ret;
 }
 

@@ -11,6 +11,7 @@
 #include <pubkey.h>
 #include <script/script.h>
 #include <uint256.h>
+#include <iostream>
 
 typedef std::vector<unsigned char> valtype;
 
@@ -1892,7 +1893,17 @@ static bool VerifyWitnessProgram(const CScriptWitness& witness, int witversion, 
             return ExecuteWitnessScript(stack, exec_script, flags, SigVersion::WITNESS_V0, checker, execdata, serror);
         } else if (program.size() == WITNESS_V0_KEYHASH_SIZE) {
             // BIP141 P2WPKH: 20-byte witness v0 program (which encodes Hash160(pubkey))
-            if (stack.size() != 2) {
+            std::cout << "witness.stack size: " << witness.stack.size() << std::endl;
+
+            for (size_t i = 0; i < witness.stack.size(); ++i) {
+                const std::vector<unsigned char>& item = witness.stack[i];
+                std::cout << "Item " << i << " (size = " << item.size() << "): ";
+                for (unsigned char byte : item) {
+                    printf("%02x", byte);  // הצגה כ-hex
+                }
+                std::cout << std::endl;
+            }
+            if (stack.size() != 2) { //CHECK
                 return set_error(serror, SCRIPT_ERR_WITNESS_PROGRAM_MISMATCH); // 2 items in witness
             }
             exec_script << OP_DUP << OP_HASH160 << program << OP_EQUALVERIFY << OP_CHECKSIG;
@@ -1995,7 +2006,7 @@ bool VerifyScript(const CScript& scriptSig, const CScript& scriptPubKey, const C
                 // The scriptSig must be _exactly_ CScript(), otherwise we reintroduce malleability.
                 return set_error(serror, SCRIPT_ERR_WITNESS_MALLEATED);
             }
-            if (!VerifyWitnessProgram(*witness, witnessversion, witnessprogram, flags, checker, serror, /*is_p2sh=*/false)) {
+            if (!VerifyWitnessProgram(*witness, witnessversion, witnessprogram, flags, checker, serror, /*is_p2sh=*/false)) { //CHECK
                 return false;
             }
             // Bypass the cleanstack check at the end. The actual stack is obviously not clean

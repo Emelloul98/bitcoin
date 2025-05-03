@@ -1,56 +1,28 @@
 #include "simpleECDSA.hpp"
 
-
-// Hash function H: maps a string to an integer in Zq
-BIGNUM* simpleECDSA:: H(const std::string& input) {
-    // Compute SHA-256 hash of the input
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-    SHA256(reinterpret_cast<const unsigned char*>(input.c_str()), input.size(), hash);
-
-    // Convert hash to a BIGNUM
-    BIGNUM* h_bn = BN_new();
-    BN_bin2bn(hash, SHA256_DIGEST_LENGTH, h_bn);
-
-    // Reduce modulo q to ensure it belongs to Zq
-    BIGNUM* result = BN_new();
-    BN_mod(result, h_bn, order, ctx);
-
-    // Cleanup
-    BN_free(h_bn);
-
-    return result;  // This is H(input) ∈ Zq
-}
+#include <openssl/hmac.h>
+#include <openssl/sha.h>
+#include <cstring>
+#include <iostream>
 
 
-// Hash function H0: maps an elliptic curve point to an integer in Zq
-BIGNUM* simpleECDSA:: H0(const EC_POINT* point) {
+#include <openssl/hmac.h>
+#include <cstring>
+
+//Hash function H0: maps an elliptic curve point to an integer in Zq
+BIGNUM* simpleECDSA::H0(const EC_POINT* point) {
     BIGNUM* x = BN_new();
-    BIGNUM* y = BN_new();
-    unsigned char hash[SHA256_DIGEST_LENGTH];
-
-    // Extract (x, y) coordinates of the elliptic curve point
-    EC_POINT_get_affine_coordinates(group, point, x, y, ctx);
-
-
-    // Convert x-coordinate to binary and hash it
-    int x_len = BN_num_bytes(x);
-    unsigned char* x_bytes = new unsigned char[x_len];
-    BN_bn2bin(x, x_bytes);
-    SHA256(x_bytes, x_len, hash);
-    
-    // Convert hash to BIGNUM and reduce mod q
-    BIGNUM* h0_bn = BN_new();
-    BN_bin2bn(hash, SHA256_DIGEST_LENGTH, h0_bn);
     BIGNUM* result = BN_new();
-    BN_mod(result, h0_bn, order, ctx);
 
-    // Cleanup
-    delete[] x_bytes;
+    if (!x || !result || !EC_POINT_get_affine_coordinates_GFp(group, point, x, nullptr, ctx)) {
+        if (x) BN_free(x);
+        if (result) BN_free(result);
+        return nullptr;
+    }
+
+    BN_mod(result, x, order, ctx);
     BN_free(x);
-    BN_free(y);
-    BN_free(h0_bn);
-
-    return result;  // This is H0(R) ∈ Zq
+    return result;
 }
 
 
@@ -66,12 +38,13 @@ BIGNUM *simpleECDSA::generate_random_zq()
     BN_rand_range(res, ord);
     // Ensure the result is in the desired range [1, order-1] by adding 1
     BN_add_word(res, 1);
+    BN_free(ord);
     return res;
 }
 
 
-std::vector<BIGNUM *> simpleECDSA::generate_polynomial_t(BIGNUM *x) 
-{
+std::vector<BIGNUM *> simpleECDSA::generate_polynomial_t(BIGNUM *x)
+{ //offline
     std::vector<BIGNUM *> coefficients;
     coefficients.push_back(BN_dup(x));
     for (int i = 1; i < t; i++)
@@ -82,7 +55,7 @@ std::vector<BIGNUM *> simpleECDSA::generate_polynomial_t(BIGNUM *x)
 }
 
 BIGNUM *simpleECDSA::evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x)
-{
+{ //offline
     BIGNUM *result = BN_new();  // Final result
     BIGNUM *temp = BN_new();    // Temporary variable for intermediate computations
     BIGNUM *x_power = BN_new(); // Holds x^i
@@ -110,7 +83,7 @@ BIGNUM *simpleECDSA::evaluate_polynomial(const std::vector<BIGNUM *> &coefficien
 
 simpleECDSA:: simpleECDSA(int threshold, int total_participants)
     : t(threshold), n(total_participants)
-{
+{ //offline
     group = EC_GROUP_new_by_curve_name(NID_secp256k1);
     order = BN_new();
     EC_GROUP_get_order(group, order, nullptr);
@@ -130,11 +103,12 @@ simpleECDSA:: simpleECDSA(int threshold, int total_participants)
 
 }
 
-void simpleECDSA:: generateKeys(){ // TOD O: should be offline phase
-    BIGNUM *privateKey = generate_random_zq();
-    EC_POINT_mul(group, publicKey, privateKey, nullptr, nullptr, ctx);
-
+void simpleECDSA:: generateKeys(EC_POINT* pubKey, BIGNUM *privateKey){ // TOD O: should be offline phase
+    //BIGNUM *privateKey = generate_random_zq();
+    //EC_POINT_mul(group, publicKey, privateKey, nullptr, nullptr, ctx);
+    EC_POINT_copy(publicKey, pubKey);
     std::vector<BIGNUM *> polynomial = generate_polynomial_t(privateKey);
+
 
     for (int i = 0; i < n; i++){
         participants[i]->x = evaluate_polynomial(polynomial, i + 1);
@@ -146,9 +120,8 @@ void simpleECDSA:: generateKeys(){ // TOD O: should be offline phase
 
 }
 
-Signature* simpleECDSA:: signMessage(const std::string& message, const std::vector<int> &signingGroup)
+Signature* simpleECDSA:: signMessage(BIGNUM* msgHash, const std::vector<int> &signingGroup)
 {
-    BIGNUM * msgHash = H(message);
     Signature* sig = new Signature();
 
     for(int i : signingGroup){
@@ -206,7 +179,14 @@ Signature* simpleECDSA:: signMessage(const std::string& message, const std::vect
         BN_free(temp);
     }
 
-    BN_free(msgHash);
+    BIGNUM* half_order = BN_new();
+    BN_rshift1(half_order, order); // half_order = order / 2
+
+    if (BN_cmp(sig->s, half_order) > 0) {
+        BN_sub(sig->s, order, sig->s); // sig->s = order - sig->s
+    }
+    BN_free(half_order);
+
     return sig;
 }
 
@@ -239,7 +219,7 @@ void simpleECDSA:: compute_sigma(std::vector<int> signingGroup) {
             }
         }
         BN_mod_mul(participants[i]->w, participants[i]->gamma, participants[i]->x,order, ctx);
-        
+
     }
 
     BIGNUM* tempKW = BN_new();
@@ -265,13 +245,13 @@ void simpleECDSA:: compute_sigma(std::vector<int> signingGroup) {
 
 
 // Function to compute R in a distributed way
-EC_POINT* simpleECDSA:: computeR(const std::vector<int> &signingGroup, BIGNUM* delta_inv) { 
+EC_POINT* simpleECDSA:: computeR(const std::vector<int> &signingGroup, BIGNUM* delta_inv) {
     EC_POINT* R = EC_POINT_new(group);
     EC_POINT_set_to_infinity(group, R); // Start with neutral element
 
     for (auto i : signingGroup) {
         EC_POINT* Ri = EC_POINT_new(group);
-        
+
         // Compute Ri = g^(γi * δ^-1)
         BIGNUM* exp = BN_new();
         BN_mod_mul(exp, participants[i]->y, delta_inv, order, ctx);
@@ -289,8 +269,7 @@ EC_POINT* simpleECDSA:: computeR(const std::vector<int> &signingGroup, BIGNUM* d
 }
 
 
-bool simpleECDSA:: verifySignature(const std::string& message, Signature* signature){
-    BIGNUM * msgHash = H(message);
+bool simpleECDSA:: verifySignature(BIGNUM * msgHash, Signature* signature){
     BIGNUM * s_inv = BN_new();
     if (!BN_mod_inverse(s_inv, signature->s, order, ctx)) {
         std::cerr << "Error computing modular inverse!" << std::endl;
@@ -312,7 +291,6 @@ bool simpleECDSA:: verifySignature(const std::string& message, Signature* signat
 
     BN_free(s_inv);
     BN_free(exp);
-    BN_free(msgHash);
     EC_POINT_free(R1);
 
     BIGNUM* r = H0(R0);
@@ -323,25 +301,3 @@ bool simpleECDSA:: verifySignature(const std::string& message, Signature* signat
     return res;
 
 }
-
-/*int main()
-{
-    simpleECDSA ecdsa(2, 3);
-
-    ecdsa.generateKeys();
-    
-    std::vector<int> signingGroup = {0, 1};
-
-    // Hash the message
-    const std::string message = "hello world from threshold ecdsa";
-    std::cout << "Message: " << message << std::endl;
-
-    Signature* signature = ecdsa.signMessage(message, signingGroup);
-    bool res = ecdsa.verifySignature(message, signature);
-    if(res){
-        std::cout << "Signature is valid" << std::endl;
-    }else{
-        std::cout << "Signature is invalid" << std::endl;
-    }
-
-}*/
