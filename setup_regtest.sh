@@ -7,7 +7,7 @@ then
 else
     # Start bitcoind in regtest mode
     echo "Starting bitcoind..."
-    src/bitcoind -regtest -daemon -fallbackfee=0.01
+    src/bitcoind -regtest -daemon -fallbackfee=0.001
     sleep 3  # Wait for the server to start
 fi
 
@@ -51,7 +51,7 @@ echo "Test wallet address: $TEST_WALLET_ADDRESS"
 
 # Send 1 BTC from "newtestwallet" to "testwallet"
 echo "Sending 1 BTC from newtestwallet to testwallet..."
-src/bitcoin-cli -regtest -rpcwallet="newtestwallet" sendtoaddress "$TEST_WALLET_ADDRESS" 1
+src/bitcoin-cli -regtest -rpcwallet="newtestwallet" sendtoaddress "$TEST_WALLET_ADDRESS" 0.001
 
 # Show the final balances after the transaction
 echo "Final balances:"
