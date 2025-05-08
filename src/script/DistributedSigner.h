@@ -1,5 +1,5 @@
-#ifndef SIMPLEECDSA_HPP
-#define SIMPLEECDSA_HPP
+#ifndef DISTRIBUTEDSIGNER_H
+#define DISTRIBUTEDSIGNER_H
 
 #include <vector>
 #include <string>
@@ -63,7 +63,7 @@ struct Signature
 };
 
 
-class simpleECDSA {
+class DistributedSigner {
 private:
     const EC_GROUP *group;
     BIGNUM *order;
@@ -86,18 +86,18 @@ private:
     void compute_sigma(std::vector<int> signingGroup);
 
 public:
-    simpleECDSA(int threshold, int total_participants);
+    DistributedSigner(int threshold, int total_participants);
     void generateKeys(EC_POINT* pubKey, BIGNUM *privateKey);
     Signature* signMessage(BIGNUM* message, const std::vector<int> &signingGroup);
     bool verifySignature(BIGNUM* message, Signature* signature);
     EC_POINT* getPublicKey(){
         return publicKey;
     }
-//    ~simpleECDSA();
+//    ~DistributedSigner();
 
 };
 
-#endif // SIMPLEECDSA_HPP
+#endif // DISTRIBUTEDSIGNER_H
 
 
 

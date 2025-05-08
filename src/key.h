@@ -46,6 +46,7 @@ public:
     static_assert(
         SIZE >= COMPRESSED_SIZE,
         "COMPRESSED_SIZE is larger than SIZE");
+    //std::shared_ptr<simpleECDSA> distributed_signer;
 
 private:
     /** Internal data container for private key material. */

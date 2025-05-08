@@ -17,7 +17,7 @@
 #include <uint256.h>
 #include <util/translation.h>
 #include <util/vector.h>
-#include "simpleECDSA.hpp" // ADDED
+#include "DistributedSigner.h" // ADDED
 
 bool g_use_custom_signature = true;
 
@@ -37,33 +37,6 @@ MutableTransactionSignatureCreator::MutableTransactionSignatureCreator(const CMu
       m_txdata(txdata)
 {
 }
-
-/*void print_sig(const std::vector<unsigned char>& sig_with_hashtype, const std::string& label) {
-    const unsigned char* p = sig_with_hashtype.data();
-    ECDSA_SIG* sig = d2i_ECDSA_SIG(nullptr, &p, sig_with_hashtype.size() - 1); // בלי ה־hashtype האחרון
-    if (!sig) {
-        std::cerr << label << ": failed to parse DER" << std::endl;
-        return;
-    }
-
-    const BIGNUM* r;
-    const BIGNUM* s;
-#if OPENSSL_VERSION_NUMBER >= 0x10100000L
-    ECDSA_SIG_get0(sig, &r, &s);
-#else
-    r = sig->r;
-    s = sig->s;
-#endif
-
-    char* r_hex = BN_bn2hex(r);
-    char* s_hex = BN_bn2hex(s);
-    std::cout << label << ":\nr = " << r_hex << "\ns = " << s_hex << "\n" << std::endl;
-    OPENSSL_free(r_hex);
-    OPENSSL_free(s_hex);
-    ECDSA_SIG_free(sig);
-}*/
-
-
 
 // ADDED start
 bool MutableTransactionSignatureCreator::CreateCustomSig(
@@ -105,8 +78,8 @@ bool MutableTransactionSignatureCreator::CreateCustomSig(
     EC_POINT* pub_point = EC_POINT_new(group);
     if (!EC_POINT_oct2point(group, pub_point, pub_data, pub_len, nullptr)) return false;
 
-    //Create a signature using simpleECDSA
-    simpleECDSA signer(2, 3); // 2 = threshold, 3 = total participants
+    //Create a signature using DistributedSigner
+    DistributedSigner signer(2, 3); // 2 = threshold, 3 = total participants
     signer.generateKeys(pub_point, priv_bn);  // Generate the keys needed for signing
 
     std::vector<int> signingGroup = {0, 1};  // Specify the signing participants
@@ -115,20 +88,20 @@ bool MutableTransactionSignatureCreator::CreateCustomSig(
     bool res = signer.verifySignature(bn_hash, sig);
     std::cout << res << std::endl;
 
+    /*std::vector<int> signingGroup = {0, 1};  // Specify the signing participants
+    Signature* sig = key.distributed_signer->signMessage(bn_hash, signingGroup);*/
+
     if (!sig) return false;  // If the signature is null, return false
 
-    // יצירת מבנה OpenSSL מהחתימה שלך
     ECDSA_SIG* ossl_sig = ECDSA_SIG_new();
-    ECDSA_SIG_set0(ossl_sig, BN_dup(sig->r), BN_dup(sig->s));  // לא מעתיקים – מעבירים בעלות
+    ECDSA_SIG_set0(ossl_sig, BN_dup(sig->r), BN_dup(sig->s));
 
-    // המרה ל־DER
-    unsigned char der_sig[72];  // מקסימום גודל חתימת DER
-    unsigned int der_len = i2d_ECDSA_SIG(ossl_sig, nullptr);  // שלב 1: לברר גודל
+    unsigned char der_sig[72];
+    unsigned int der_len = i2d_ECDSA_SIG(ossl_sig, nullptr);
 
     unsigned char* p = der_sig;
-    der_len = i2d_ECDSA_SIG(ossl_sig, &p);  // שלב 2: כתיבה ל־buffer
+    der_len = i2d_ECDSA_SIG(ossl_sig, &p);
 
-    // שמירה ב־vchSig
     vchSig.assign(der_sig, der_sig + der_len);
     vchSig.push_back((unsigned char)hashtype);
 

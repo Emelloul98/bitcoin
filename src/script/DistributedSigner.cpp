@@ -1,4 +1,4 @@
-#include "simpleECDSA.hpp"
+#include "DistributedSigner.h"
 
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
@@ -10,11 +10,11 @@
 #include <cstring>
 
 //Hash function H0: maps an elliptic curve point to an integer in Zq
-BIGNUM* simpleECDSA::H0(const EC_POINT* point) {
+BIGNUM* DistributedSigner::H0(const EC_POINT* point) {
     BIGNUM* x = BN_new();
     BIGNUM* result = BN_new();
 
-    if (!x || !result || !EC_POINT_get_affine_coordinates_GFp(group, point, x, nullptr, ctx)) {
+    if (!x || !result || !EC_POINT_get_affine_coordinates(group, point, x, nullptr, ctx)) {
         if (x) BN_free(x);
         if (result) BN_free(result);
         return nullptr;
@@ -26,7 +26,7 @@ BIGNUM* simpleECDSA::H0(const EC_POINT* point) {
 }
 
 
-BIGNUM *simpleECDSA::generate_random_zq()
+BIGNUM *DistributedSigner::generate_random_zq()
 {
     BIGNUM *res = BN_new();
     BIGNUM *ord = BN_new();
@@ -43,7 +43,7 @@ BIGNUM *simpleECDSA::generate_random_zq()
 }
 
 
-std::vector<BIGNUM *> simpleECDSA::generate_polynomial_t(BIGNUM *x)
+std::vector<BIGNUM *> DistributedSigner::generate_polynomial_t(BIGNUM *x)
 { //offline
     std::vector<BIGNUM *> coefficients;
     coefficients.push_back(BN_dup(x));
@@ -54,7 +54,7 @@ std::vector<BIGNUM *> simpleECDSA::generate_polynomial_t(BIGNUM *x)
     return coefficients;
 }
 
-BIGNUM *simpleECDSA::evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x)
+BIGNUM *DistributedSigner::evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x)
 { //offline
     BIGNUM *result = BN_new();  // Final result
     BIGNUM *temp = BN_new();    // Temporary variable for intermediate computations
@@ -81,7 +81,7 @@ BIGNUM *simpleECDSA::evaluate_polynomial(const std::vector<BIGNUM *> &coefficien
     return result;
 }
 
-simpleECDSA:: simpleECDSA(int threshold, int total_participants)
+DistributedSigner:: DistributedSigner(int threshold, int total_participants)
     : t(threshold), n(total_participants)
 { //offline
     group = EC_GROUP_new_by_curve_name(NID_secp256k1);
@@ -103,7 +103,7 @@ simpleECDSA:: simpleECDSA(int threshold, int total_participants)
 
 }
 
-void simpleECDSA:: generateKeys(EC_POINT* pubKey, BIGNUM *privateKey){ // TOD O: should be offline phase
+void DistributedSigner:: generateKeys(EC_POINT* pubKey, BIGNUM *privateKey){ // TOD O: should be offline phase
     //BIGNUM *privateKey = generate_random_zq();
     //EC_POINT_mul(group, publicKey, privateKey, nullptr, nullptr, ctx);
     EC_POINT_copy(publicKey, pubKey);
@@ -116,11 +116,9 @@ void simpleECDSA:: generateKeys(EC_POINT* pubKey, BIGNUM *privateKey){ // TOD O:
 
     for (auto coeff : polynomial)
         BN_free(coeff);
-    BN_free(privateKey);
-
 }
 
-Signature* simpleECDSA:: signMessage(BIGNUM* msgHash, const std::vector<int> &signingGroup)
+Signature* DistributedSigner:: signMessage(BIGNUM* msgHash, const std::vector<int> &signingGroup)
 {
     Signature* sig = new Signature();
 
@@ -191,7 +189,7 @@ Signature* simpleECDSA:: signMessage(BIGNUM* msgHash, const std::vector<int> &si
 }
 
 
-void simpleECDSA:: compute_sigma(std::vector<int> signingGroup) {
+void DistributedSigner:: compute_sigma(std::vector<int> signingGroup) {
     BIGNUM *num = BN_new();  // Numerator (j + 1)
     BIGNUM *den = BN_new();  // Denominator (j - i)
     BIGNUM *inv = BN_new();  // Inverse of denominator
@@ -245,7 +243,7 @@ void simpleECDSA:: compute_sigma(std::vector<int> signingGroup) {
 
 
 // Function to compute R in a distributed way
-EC_POINT* simpleECDSA:: computeR(const std::vector<int> &signingGroup, BIGNUM* delta_inv) {
+EC_POINT* DistributedSigner:: computeR(const std::vector<int> &signingGroup, BIGNUM* delta_inv) {
     EC_POINT* R = EC_POINT_new(group);
     EC_POINT_set_to_infinity(group, R); // Start with neutral element
 
@@ -269,7 +267,7 @@ EC_POINT* simpleECDSA:: computeR(const std::vector<int> &signingGroup, BIGNUM* d
 }
 
 
-bool simpleECDSA:: verifySignature(BIGNUM * msgHash, Signature* signature){
+bool DistributedSigner:: verifySignature(BIGNUM * msgHash, Signature* signature){
     BIGNUM * s_inv = BN_new();
     if (!BN_mod_inverse(s_inv, signature->s, order, ctx)) {
         std::cerr << "Error computing modular inverse!" << std::endl;

@@ -720,7 +720,7 @@ libbitcoin_common_a_SOURCES = \
   script/sign.cpp \
   script/signingprovider.cpp \
   script/solver.cpp \
-  script/simpleECDSA.cpp \
+  script/DistributedSigner.cpp \
   $(BITCOIN_CORE_H)
 #
 
