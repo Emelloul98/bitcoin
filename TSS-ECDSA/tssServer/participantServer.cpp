@@ -148,3 +148,24 @@ void handle_client(int client_socket, int port, const BIGNUM* order) {
 
     close(client_socket);
 }
+void run_server(int port) {
+    int server_fd = socket(AF_INET, SOCK_STREAM, 0);
+
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons(port);
+
+    bind(server_fd, (sockaddr*)&address, sizeof(address));
+    listen(server_fd, 5);
+    std::cout << "Participant server on port " << port << std::endl;
+
+
+    while (true) {
+        int client_socket = accept(server_fd, nullptr, nullptr);
+        handle_client(client_socket, port, order);
+    }
+
+
+    close(server_fd);
+}
