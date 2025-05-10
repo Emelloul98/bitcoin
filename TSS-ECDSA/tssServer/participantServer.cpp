@@ -37,3 +37,21 @@ BIGNUM* generate_random_zq(const BIGNUM* order) {
     BN_free(ord);
     return res;
 }
+void append_bn_to_file(const std::string& filename, const std::string& key, const BIGNUM* value) {
+    std::ofstream outfile(filename, std::ios::app);
+    char* hex = BN_bn2hex(value);
+    outfile << key << ": " << hex << "\n";
+    OPENSSL_free(hex);
+    outfile.close();
+}
+
+std::string get_bn_from_file(const std::string& filename, const std::string& key) {
+    std::ifstream infile(filename);
+    std::string line, prefix = key + ": ";
+    while (std::getline(infile, line)) {
+        if (line.rfind(prefix, 0) == 0) {
+            return line.substr(prefix.length());
+        }
+    }
+    return "NOT_FOUND";
+}
