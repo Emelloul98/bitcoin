@@ -55,3 +55,96 @@ std::string get_bn_from_file(const std::string& filename, const std::string& key
     }
     return "NOT_FOUND";
 }
+void handle_client(int client_socket, int port, const BIGNUM* order) {
+    char buffer[1024];
+    int read_bytes = read(client_socket, buffer, sizeof(buffer) - 1);
+    if (read_bytes <= 0) { close(client_socket); return; }
+    buffer[read_bytes] = '\0';
+
+    std::ofstream log_file("server_log.txt", std::ios::app); // פתיחה ב־append mode
+    if (log_file.is_open()) {
+        log_file << "Received from port " << port << ": " << buffer << std::endl;
+        log_file.close();
+    }
+    std::istringstream iss(buffer);
+    std::string command, key, value , pubkey_hex;
+    iss >> command;
+    if(command == "store")
+    {
+        iss >> key >> value >> pubkey_hex;
+    }
+    else if(command =="generate_k_and_y")
+    {
+        iss >> pubkey_hex;
+    }
+    else {
+        iss >> key >> pubkey_hex;
+    }
+    if (!value.empty() && value[0] == ' ') value.erase(0, 1);
+
+    std::string filename = get_filename_for_port(port,pubkey_hex);
+
+    if (command == "generate_k_and_y") {
+        std::ifstream infile(filename);
+        std::string line, saved_polynomial_secret;
+        while (std::getline(infile, line)) {
+            if (line.find("polynomial_secret") == 0) {
+                saved_polynomial_secret = line;
+                break;
+            }
+        }
+        infile.close();
+
+        std::ofstream outfile(filename, std::ios::trunc);
+        if (!saved_polynomial_secret.empty()) {
+            outfile << saved_polynomial_secret << std::endl;
+        }
+        outfile.close();
+
+        BIGNUM* k = generate_random_zq(order);
+        BIGNUM* y = generate_random_zq(order);
+        append_bn_to_file(filename, "k", k);
+        append_bn_to_file(filename, "y", y);
+        BN_free(k);
+        BN_free(y);
+        send(client_socket, "OK\n", 3, 0);
+    } else if (command == "get") {
+        std::string val = get_bn_from_file(filename, key);
+        send(client_socket, val.c_str(), val.size(), 0);
+    } else if (command == "store") {
+        BIGNUM* bn = nullptr;
+        BN_hex2bn(&bn, value.c_str());
+        append_bn_to_file(filename, key, bn);
+        BN_free(bn);
+        send(client_socket, "OK\n", 3, 0);
+    }else if (command == "compute_R") {
+
+        BIGNUM* delta = nullptr;
+        BN_hex2bn(&delta, key.c_str());
+
+        BIGNUM* y = nullptr;
+        std::string y_val = get_bn_from_file(filename, "y");
+
+        if (!BN_hex2bn(&y, y_val.c_str())) {
+            std::cerr << "BN_hex2bn failed for y_val: " << y_val << std::endl;
+            close(client_socket);
+            return;
+        }
+
+        BIGNUM* exp = BN_new();
+        BN_mod_mul(exp, y, delta, order, ctx);
+
+        EC_POINT* Ri = EC_POINT_new(group);
+        EC_POINT_mul(group, Ri, exp, nullptr, nullptr, ctx); // Ri = g^exp
+
+        char* Ri_hex = EC_POINT_point2hex(group, Ri, POINT_CONVERSION_UNCOMPRESSED, ctx);
+        send(client_socket, Ri_hex, strlen(Ri_hex), 0);
+
+        BN_free(delta); BN_free(y); BN_free(exp);
+        EC_POINT_free(Ri); OPENSSL_free(Ri_hex);
+    }else {
+        send(client_socket, "INVALID\n", 8, 0);
+    }
+
+    close(client_socket);
+}
