@@ -1,6 +1,8 @@
 #!/bin/bash
 
-rm -rf ~/.bitcoin/regtest
+#rm -rf ~/.bitcoin/regtest
+rm -r ~/.bitcoin/regtest/wallets/wallet1
+rm -r ~/.bitcoin/regtest/wallets/wallet2
 
 # Check if bitcoind is already running
 if pgrep -x "bitcoind" > /dev/null

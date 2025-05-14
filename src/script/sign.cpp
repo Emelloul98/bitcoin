@@ -70,8 +70,8 @@ bool MutableTransactionSignatureCreator::CreateCustomSig(
     CPubKey pubkey = key.GetPubKey();
 
     std::string pubkey_hex = HexStr(MakeUCharSpan(pubkey));
-
-    Signature* sig =  DistributedSigner:: signMessage(pubkey_hex, bn_hash, {5000, 5001});  // Sign the message
+    // נצטרך לקבל איזה קבוצה חותמת מהui ואז לשלוח לsign
+    Signature* sig = DistributedSigner:: signMessage(pubkey_hex, bn_hash, {5000, 5001});  // Sign the message
 
     if (!sig) return false;  // If the signature is null, return false
 
