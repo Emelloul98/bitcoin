@@ -1,103 +1,58 @@
 #ifndef DISTRIBUTEDSIGNER_H
 #define DISTRIBUTEDSIGNER_H
 
+#include <iostream>
 #include <vector>
 #include <string>
-#include <fstream>
-#include <iostream>
+#include <sstream>
+#include <map>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
-#include <openssl/evp.h>
 #include <openssl/sha.h>
-#include <openssl/err.h>
-#include <cstring>
+#include <openssl/obj_mac.h>
 
 
-struct Participant
-{
-    BIGNUM *y;
-    BIGNUM *k;
-    BIGNUM *x;
-    BIGNUM *w;
-
-    BIGNUM *sigma;
-    BIGNUM *s;
-    BIGNUM *gamma;
-    int participant_id;
-
-
-    Participant() {
-        y = BN_new();
-        k = BN_new();
-        x = BN_new();
-        w = BN_new();
-        sigma = BN_new();
-        s = BN_new();
-        gamma = BN_new();
-        BN_one(gamma);
-        participant_id = -1;
-     }
-
-     ~Participant() {
-        BN_free(y);
-        BN_free(k);
-        BN_free(x);
-        BN_free(w);
-        BN_free(sigma);
-        BN_free(s);
-        BN_free(gamma);
-
-     }
+struct Signature {
+    BIGNUM* r;
+    BIGNUM* s;
 };
-
-struct Signature
-{
-    BIGNUM *r;
-    BIGNUM *s;
-
-    //~Signature() TOD O
-    //{
-    //    BN_free(r);
-    //   BN_free(s);
-    //}
-};
-
 
 class DistributedSigner {
 private:
-    const EC_GROUP *group;
-    BIGNUM *order;
-    EC_POINT *generator;
-    EC_POINT *publicKey;
-    BN_CTX *ctx;
+    static const int t = 2;
+    static const int n = 3;
+    static BIGNUM* order;
+    static EC_GROUP* group;
+    static BN_CTX* ctx;
 
-    int t;
-    int n;
-    std::vector<Participant*> participants;
 
-    BIGNUM *H(const std::string& input);
-    BIGNUM *H0(const EC_POINT* point);
+    struct CleanupHelper {
+        ~CleanupHelper() {
+            EC_GROUP_free(group);
+            BN_free(order);
+            BN_CTX_free(ctx);
+        }
+    };
+    static CleanupHelper cleanup_guard;
+    static std::string send_to_participant(std::string pub_str, int port, const std::string& message);
+    static BIGNUM* str_to_bn(const std::string& hex);
+    static BIGNUM* H0(const EC_POINT* point);
+    static std::vector<BIGNUM *> generate_polynomial_t(BIGNUM *x);
+    static BIGNUM *evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x);
+    static BIGNUM* generate_random_zq();
+    static void compute_sigma(std::string pub_str, const std::vector<int>& ports);
 
-    BIGNUM* generate_random_zq();
-    std::vector<BIGNUM *> generate_polynomial_t(BIGNUM *x);
-    BIGNUM *evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x);
-    void generate_participants_data(const std::vector<int> &signingGroup);
-    EC_POINT* computeR(const std::vector<int> &signingGroup, BIGNUM* delta_inv);
-    void compute_sigma(std::vector<int> signingGroup);
 
 public:
-    DistributedSigner(int threshold, int total_participants);
-    void generateKeys(EC_POINT* pubKey, BIGNUM *privateKey);
-    Signature* signMessage(BIGNUM* message, const std::vector<int> &signingGroup);
-    bool verifySignature(BIGNUM* message, Signature* signature);
-    EC_POINT* getPublicKey(){
-        return publicKey;
-    }
-//    ~DistributedSigner();
+
+    static void generateKeys(std::string pub_str, BIGNUM *privateKey);
+    static Signature* signMessage(std::string pub_str, BIGNUM* msgHash, const std::vector<int>& ports);
+    static void cleanup();
 
 };
-
-#endif // DISTRIBUTEDSIGNER_H
-
+#endif //DISTRIBUTEDSIGNER_H
 
 

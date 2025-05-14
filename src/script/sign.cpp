@@ -67,29 +67,11 @@ bool MutableTransactionSignatureCreator::CreateCustomSig(
     uint256 hash = SignatureHash(scriptCode, m_txto, nIn, hashtype, amount, sigversion, m_txdata);
     BIGNUM* bn_hash = BN_bin2bn(hash.begin(), 32, nullptr);
 
-    BIGNUM* priv_bn = BN_new();
-    BN_bin2bn(reinterpret_cast<const unsigned char*>(key.begin()), 32, priv_bn);
-
     CPubKey pubkey = key.GetPubKey();
-    const unsigned char* pub_data = pubkey.data();
-    size_t pub_len = pubkey.size();
 
-    EC_GROUP* group = EC_GROUP_new_by_curve_name(NID_secp256k1);
-    EC_POINT* pub_point = EC_POINT_new(group);
-    if (!EC_POINT_oct2point(group, pub_point, pub_data, pub_len, nullptr)) return false;
+    std::string pubkey_hex = HexStr(MakeUCharSpan(pubkey));
 
-    //Create a signature using DistributedSigner
-    DistributedSigner signer(2, 3); // 2 = threshold, 3 = total participants
-    signer.generateKeys(pub_point, priv_bn);  // Generate the keys needed for signing
-
-    std::vector<int> signingGroup = {0, 1};  // Specify the signing participants
-    Signature* sig = signer.signMessage(bn_hash, signingGroup);  // Sign the message
-
-    bool res = signer.verifySignature(bn_hash, sig);
-    std::cout << res << std::endl;
-
-    /*std::vector<int> signingGroup = {0, 1};  // Specify the signing participants
-    Signature* sig = key.distributed_signer->signMessage(bn_hash, signingGroup);*/
+    Signature* sig =  DistributedSigner:: signMessage(pubkey_hex, bn_hash, {5000, 5001});  // Sign the message
 
     if (!sig) return false;  // If the signature is null, return false
 

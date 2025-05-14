@@ -26,7 +26,12 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/obj_mac.h>
+#include <memory>
 
+#include "DistributedSigner.h"
 using util::Split;
 
 namespace {
@@ -698,6 +703,20 @@ public:
         for (const auto& p : m_pubkey_args) {
             entries.emplace_back();
             if (!p->GetPubKey(pos, arg, entries.back().first, entries.back().second, read_cache, write_cache)) return false;
+            CKey keyChild;
+            if (p->GetPrivKey(pos, arg, keyChild)) {
+                // Create BIGNUM from key
+                BIGNUM* priv_bn = BN_new();
+                BN_bin2bn(reinterpret_cast<const unsigned char*>(keyChild.begin()), 32, priv_bn);
+
+                CPubKey pubkey = keyChild.GetPubKey();
+                std::string pubkey_str = HexStr(MakeUCharSpan(pubkey));
+
+                DistributedSigner:: generateKeys(pubkey_str, priv_bn);
+
+                // Free memory
+                BN_free(priv_bn);
+            }
         }
         std::vector<CScript> subscripts;
         FlatSigningProvider subprovider;

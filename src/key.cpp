@@ -169,21 +169,6 @@ void CKey::MakeNewKey(bool fCompressedIn) {
         GetStrongRandBytes(*keydata);
     } while (!Check(keydata->data()));
     fCompressed = fCompressedIn;
-
-    // Create distributed signer once
-    /*BIGNUM* priv_bn = BN_bin2bn(keydata->data(), 32, nullptr);
-    EC_GROUP* group = EC_GROUP_new_by_curve_name(NID_secp256k1);
-    EC_POINT* pub_point = EC_POINT_new(group);
-
-    // Create pubkey point from privkey
-    EC_POINT_mul(group, pub_point, priv_bn, nullptr, nullptr, nullptr);
-
-    distributed_signer = std::make_shared<simpleECDSA>(2, 3);
-    distributed_signer->generateKeys(pub_point, priv_bn);
-
-    BN_free(priv_bn);
-    EC_GROUP_free(group);
-    EC_POINT_free(pub_point);*/
 }
 
 CPrivKey CKey::GetPrivKey() const {
