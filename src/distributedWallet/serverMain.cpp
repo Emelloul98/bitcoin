@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "Usage: ./server <port1> <port2> ..." << std::endl;
         return 1;
     }
-    create_DB(argc-1);
+    initializeKeyShareDatabases(argc-1);
 
     signal(SIGINT, signalHandler);  // <- Ctrl+C handler
 

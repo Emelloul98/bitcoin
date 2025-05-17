@@ -10,338 +10,303 @@ namespace DistributedSigner {
 
 
     // === Hidden variables ===
-    static int t = 2;
-    static int n = 3;
+    static int threshold = 2;
+    static int participantCount = 3;
+    const int firstParticipantPort = 5000;
 
-    BIGNUM* order = nullptr;
-    EC_GROUP* group = nullptr;
-    BN_CTX* ctx = nullptr;
+    BIGNUM* curveOrder = nullptr;
+    EC_GROUP* curveGroup = nullptr;
+    BN_CTX* bnContext = nullptr;
 
-    void initialize() {
-        group = EC_GROUP_new_by_curve_name(NID_secp256k1);
-        order = BN_new();
-        EC_GROUP_get_order(group, order, nullptr);
-        ctx = BN_CTX_new();
+    /**
+     * @brief Initialize elliptic curve parameters for secp256k1.
+     */
+    void initializeCryptoParameters() {
+        curveGroup = EC_GROUP_new_by_curve_name(NID_secp256k1);
+        curveOrder = BN_new();
+        EC_GROUP_get_order(curveGroup, curveOrder, nullptr);
+        bnContext = BN_CTX_new();
     }
 
-    void cleanup() {
-        EC_GROUP_free(group);
-        BN_free(order);
-        BN_CTX_free(ctx);
-    }
-    // === Public functions ===
-    void set_threshold(int new_t, int new_n) {
-        t = new_t;
-        n = new_n;
+    /**
+     * @brief Cleanup allocated elliptic curve resources.
+     */
+    void cleanupCryptoParameters() {
+        if (curveGroup) EC_GROUP_free(curveGroup);
+        curveGroup = nullptr;
+        if (curveOrder) BN_free(curveOrder);
+        curveOrder = nullptr;
+        if (bnContext) BN_CTX_free(bnContext);
+        bnContext = nullptr;
     }
 
-    BIGNUM* generate_random_zq() {
-        BIGNUM* ord = BN_dup(order);
-        BN_sub_word(ord, 1);
-        BIGNUM* res = BN_new();
-        BN_rand_range(res, ord);
-        BN_add_word(res, 1);
-        BN_free(ord);
-        return res;
+// === Public functions ===
+    void setThreshold(int newThreshold, int newParticipantCount) {
+        threshold = newThreshold;
+        participantCount = newParticipantCount;
     }
-    std::string send_to_participant(std::string pub_str, int port, const std::string& in_message) {
+
+    BIGNUM* generateRandomInZq() {
+        BIGNUM* tempOrder = BN_dup(curveOrder);
+        BN_sub_word(tempOrder, 1);
+        BIGNUM* result = BN_new();
+        BN_rand_range(result, tempOrder);
+        BN_add_word(result, 1);
+        BN_free(tempOrder);
+        return result;
+    }
+
+    std::string sendCommandToParticipant(const std::string& publicKey, int port, const std::string& message) {
         int sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock < 0) {
             perror("socket failed");
             return "ERROR_SOCKET";
         }
-        std::string message = pub_str + " " + in_message;
 
-        sockaddr_in addr{};
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(port);
-        addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+        std::string fullMessage = publicKey + " " + message;
 
-        if (connect(sock, (sockaddr*)&addr, sizeof(addr)) < 0) {
+        sockaddr_in address{};
+        address.sin_family = AF_INET;
+        address.sin_port = htons(port);
+        address.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+        if (connect(sock, (sockaddr*)&address, sizeof(address)) < 0) {
             perror("connect failed");
             close(sock);
             return "ERROR_CONNECT";
         }
 
-        if (send(sock, message.c_str(), message.size(), 0) < 0) {
+        if (send(sock, fullMessage.c_str(), fullMessage.size(), 0) < 0) {
             perror("send failed");
             close(sock);
             return "ERROR_SEND";
         }
 
-
         char buffer[1024] = {};
-        int read_bytes = read(sock, buffer, sizeof(buffer) - 1);
-        if (read_bytes <= 0) {
-            close(sock);
-            return "";
-        }
+        int bytesRead = read(sock, buffer, sizeof(buffer) - 1);
         close(sock);
-        return std::string(buffer);
+
+        return (bytesRead > 0) ? std::string(buffer) : "";
     }
 
-    std::vector<BIGNUM *> generate_polynomial_t(BIGNUM *x)
-    {
-        std::vector<BIGNUM *> coefficients;
-        coefficients.push_back(BN_dup(x));
-        for (int i = 1; i < t; i++)
-        {
-            coefficients.push_back(generate_random_zq());
+    std::vector<BIGNUM*> generatePolynomialCoefficients(BIGNUM* constantTerm) {
+        std::vector<BIGNUM*> coefficients{ BN_dup(constantTerm) };
+        for (int i = 1; i < threshold; ++i) {
+            coefficients.push_back(generateRandomInZq());
         }
         return coefficients;
     }
 
-
     /*
-     *  evaluate_polynomial function:
-     *  1.Calculates the value of the given polynomial at the point x.
-     *  2.return the result f(x).
-     */
-    BIGNUM* evaluate_polynomial(const std::vector<BIGNUM *> &coefficients, int x)
-    {
-        BIGNUM *result = BN_new();  // Final result
-        BIGNUM *temp = BN_new();    // Temporary variable for intermediate computations
-        BIGNUM *x_power = BN_new(); // Holds x^i
+    *  evaluate_polynomial function:
+    *  1.Calculates the value of the given polynomial at the point x.
+    *  2.return the result f(x).
+    */
+    BIGNUM* evaluatePolynomialAtX(const std::vector<BIGNUM*>& coefficients, int xValue) {
+        BIGNUM* result = BN_new();
+        BIGNUM* term = BN_new();
+        BIGNUM* xPower = BN_new();
 
-        BN_zero(result); // Initialize result to 0
-        BN_one(x_power); // x^0 = 1
+        BN_zero(result);
+        BN_one(xPower);
 
-        for (size_t i = 0; i < coefficients.size(); i++)
-        {
-            // temp = coefficients[i] * x_power mod order
-            BN_mod_mul(temp, coefficients[i], x_power, order, ctx);
-
-            // result = result + temp mod order
-            BN_mod_add(result, result, temp, order, ctx);
-
-            // x_power = x_power * x mod order
-            BN_mul_word(x_power, x); // x_power *= x
+        for (const auto& coeff : coefficients) {
+            BN_mod_mul(term, coeff, xPower, curveOrder, bnContext);
+            BN_mod_add(result, result, term, curveOrder, bnContext);
+            BN_mul_word(xPower, xValue);
         }
 
-        BN_free(temp);
-        BN_free(x_power);
+        BN_free(term);
+        BN_free(xPower);
 
         return result;
     }
 
+    void generateKeys(const std::string& publicKey, BIGNUM* privateKey) {
+        initializeCryptoParameters();
 
-    void generateKeys(const std::string& pub_str, BIGNUM* privateKey)
-    {
-        initialize();
-        std::vector<int> ports(n);
+        std::vector<int> ports(participantCount);
         std::iota(ports.begin(), ports.end(), 5000);
 
-        // shamir polynomial creation:
-        std::vector<BIGNUM *> polynomial = generate_polynomial_t(privateKey);
+        auto polynomialCoefficients = generatePolynomialCoefficients(privateKey);
 
-        // Send each f(i) to its respective server
         for (size_t i = 0; i < ports.size(); ++i) {
-            BIGNUM* secret = evaluate_polynomial(polynomial, i + 1);
-            char* secret_hex = BN_bn2hex(secret);
-            send_to_participant(pub_str, ports[i], std::string("store polynomial_secret ") + secret_hex + "\n");
-            OPENSSL_free(secret_hex);
-            BN_free(secret);
+            BIGNUM* secretShare = evaluatePolynomialAtX(polynomialCoefficients, i + 1);
+            char* secretHex = BN_bn2hex(secretShare);
+            sendCommandToParticipant(publicKey, ports[i], "store polynomial_secret " + std::string(secretHex) + "\n");
+            OPENSSL_free(secretHex);
+            BN_free(secretShare);
         }
 
-        for (auto coeff : polynomial) BN_free(coeff);
-        cleanup();
+        for (auto& coeff : polynomialCoefficients) BN_free(coeff);
+
+        cleanupCryptoParameters();
     }
 
-    BIGNUM* str_to_bn(const std::string& hex) {
-        BIGNUM* res = nullptr;
-        BN_hex2bn(&res, hex.c_str());
-        return res;
-    }
 
-    BIGNUM* H0(const EC_POINT* point) {
-        BIGNUM* x = BN_new();
-        BIGNUM* result = BN_new();
-        if (!EC_POINT_get_affine_coordinates(group, point, x, nullptr, ctx)) {
-            BN_free(x); BN_free(result); return nullptr;
-        }
-        BN_mod(result, x, order, ctx);
-        BN_free(x);
+     BIGNUM* hexStringToBignum(const std::string& hexString) {
+        BIGNUM* result = nullptr;
+        BN_hex2bn(&result, hexString.c_str());
         return result;
     }
 
+    BIGNUM* hashPointToBignum(const EC_POINT* point) {
+        BIGNUM* xCoord = BN_new();
+        BIGNUM* hashedValue = BN_new();
+        if (!EC_POINT_get_affine_coordinates(curveGroup, point, xCoord, nullptr, bnContext)) {
+            BN_free(xCoord); BN_free(hashedValue);
+            return nullptr;
+        }
+        BN_mod(hashedValue, xCoord, curveOrder, bnContext);
+        BN_free(xCoord);
+        return hashedValue;
+    }
 
 
-    void compute_sigma(std::string pub_str, const std::vector<int>& ports)
-    {
-        // Create temporary BIGNUM variables for computation.
-        BIGNUM *num = BN_new();  // numerator
-        BIGNUM *den = BN_new();  // denominator
-        BIGNUM *inv = BN_new();  // inverse of denominator
-        BIGNUM *temp = BN_new(); // temporary product
-        BIGNUM * k_sum = BN_new();
+    void computeSigmaValues(const std::string& publicKey, const std::vector<int>& signingGroup) {
+        BIGNUM *numerator = BN_new(), *denominator = BN_new(), *inverseDen = BN_new();
+        BIGNUM *tempProduct = BN_new(), *kSum = BN_new();
+        BN_zero(kSum);
+
         // We'll store gamma for each participant in signingGroup in a map.
         // key: participant index (as used in signingGroup)
-        std::map<int, BIGNUM*> gammaMap;
-        std::vector<int> signingGroup = {0, 1};
+        std::map<int, BIGNUM*> lagrangeCoefficients;
 
         // For each participant i in the signing group,
         // initialize gamma_i to 1 and update it based on other participants.
-        for (int i : signingGroup) {
-            BIGNUM* gamma_i = BN_new();
-            // set gamma_i = 1:
-            BN_one(gamma_i);
-            for (int j : signingGroup) {
-                if (j == i)
-                    continue;
-                // num = (j + 1)
-                BN_set_word(num, j + 1);
-                // den = |j - i|
-                BN_set_word(den, std::abs(j - i));
-                if ((j - i) < 0) {
-                    BN_set_negative(den, 1);
+        for (int tempIdxI : signingGroup) {
+            int i = tempIdxI - firstParticipantPort;
+            BIGNUM* gamma = BN_new(); BN_one(gamma);
+            for (int tempIdxJ : signingGroup) {
+                int j = tempIdxJ - firstParticipantPort;
+                if (j == i) continue;
+                BN_set_word(numerator, j + 1);
+                BN_set_word(denominator, std::abs(j - i));
+                if ((j - i) < 0) BN_set_negative(denominator, 1);
+                if (!BN_mod_inverse(inverseDen, denominator, curveOrder, bnContext)) {
+                    std::cerr << "Error computing inverse." << std::endl;
                 }
-                // Compute modular inverse of den (inv = den^(-1) mod order)
-                if (!BN_mod_inverse(inv, den, order, ctx)) {
-                    std::cerr << "Error computing modular inverse." << std::endl;
-                }
-                // Compute temp = (num * inv) mod order
-                BN_mod_mul(temp, num, inv, order, ctx);
-                // Update gamma_i = (gamma_i * temp) mod order
-                BN_mod_mul(gamma_i, gamma_i, temp, order, ctx);
+                BN_mod_mul(tempProduct, numerator, inverseDen, curveOrder, bnContext);
+                BN_mod_mul(gamma, gamma, tempProduct, curveOrder, bnContext);
             }
-            gammaMap[i] = gamma_i;
+            lagrangeCoefficients[i] = gamma;
         }
 
+        for (size_t idx = 0; idx < signingGroup.size(); ++idx) {
+            std::string xStr = sendCommandToParticipant(publicKey, signingGroup[idx], "get polynomial_secret\n");
+            std::string kStr = sendCommandToParticipant(publicKey, signingGroup[idx], "get k\n");
 
-        // For each participant i, compute w_i = gamma_i * x_i mod order. (x_i is the Shamir share)
-        BN_zero(k_sum);
+            BIGNUM* x_i = hexStringToBignum(xStr);
+            BIGNUM* k_i = hexStringToBignum(kStr);
 
+            BN_mod_add(kSum, kSum, k_i, curveOrder, bnContext);
 
-        for (size_t idx = 0; idx < ports.size(); ++idx) {
-            int port = ports[idx];
-            int participant_index = idx + 1; // for naming consistency
-
-            // Get x_i = f(i)
-            std::string x_str = send_to_participant(pub_str, port, "get polynomial_secret\n");
-
-            BIGNUM* x_i = str_to_bn(x_str);
-
-            // Get k_i
-            std::string k_str = send_to_participant(pub_str, port, "get k\n");
-            BIGNUM* k_i = str_to_bn(k_str);
-
-            // k_sum += k_i
-            BN_mod_add(k_sum, k_sum, k_i, order, ctx);
-
-            // gamma_i was computed locally beforehand
             BIGNUM* w_i = BN_new();
-            BN_mod_mul(w_i, gammaMap[participant_index - 1], x_i, order, ctx);
+            BN_mod_mul(w_i, lagrangeCoefficients[signingGroup[idx] - firstParticipantPort], x_i, curveOrder, bnContext);
 
-            // Send w_i back to participant file
-            char* w_hex = BN_bn2hex(w_i);
-            send_to_participant(pub_str, port, std::string("store w ") + w_hex + "\n");
-            OPENSSL_free(w_hex);
+            char* wHex = BN_bn2hex(w_i);
+            sendCommandToParticipant(publicKey, signingGroup[idx], "store w " + std::string(wHex) + "\n");
 
-            // Clean up
-            BN_free(x_i);
-            BN_free(k_i);
-            BN_free(w_i);
+            OPENSSL_free(wHex);
+            BN_free(x_i); BN_free(k_i); BN_free(w_i);
         }
 
         // Now, compute sigma for each participant i:
         // sigma_i = sum_{j in signingGroup} ( k_j * w_i ) mod order.
-        for (size_t idx = 0; idx < ports.size(); ++idx) {
-            int port = ports[idx];
+        for (size_t idx = 0; idx < signingGroup.size(); ++idx) {
+            std::string wStr = sendCommandToParticipant(publicKey, signingGroup[idx], "get w\n");
+            BIGNUM* w_i = hexStringToBignum(wStr);
 
-            // Get w_i from server
-            std::string w_str = send_to_participant(pub_str, port, "get w\n");
-            BIGNUM* w_i = str_to_bn(w_str);
-
-            // Compute sigma_i = k_sum * w_i mod order
             BIGNUM* sigma_i = BN_new();
-            BN_mod_mul(sigma_i, k_sum, w_i, order, ctx);
+            BN_mod_mul(sigma_i, kSum, w_i, curveOrder, bnContext);
 
-            // Send sigma_i to participant file
-            char* sigma_hex = BN_bn2hex(sigma_i);
-            send_to_participant(pub_str, port, std::string("store sigma ") + sigma_hex + "\n");
-            OPENSSL_free(sigma_hex);
+            char* sigmaHex = BN_bn2hex(sigma_i);
+            sendCommandToParticipant(publicKey, signingGroup[idx], "store sigma " + std::string(sigmaHex) + "\n");
 
-            BN_free(w_i);
-            BN_free(sigma_i);
+            OPENSSL_free(sigmaHex);
+            BN_free(w_i); BN_free(sigma_i);
         }
-
-
         // clean-up:
-        BN_free(temp);
-        BN_free(num);
-        BN_free(den);
-        BN_free(inv);
-        BN_free(k_sum);
-        for (auto &entry : gammaMap) {
-            BN_free(entry.second);
-        }
+        BN_free(numerator); BN_free(denominator); BN_free(inverseDen);
+        BN_free(tempProduct); BN_free(kSum);
+        for (auto& entry : lagrangeCoefficients) BN_free(entry.second);
     }
 
-    Signature* signMessage(const std::string& pub_str, BIGNUM* msgHash, const std::vector<int>& ports){        initialize();
-        Signature* sig = new Signature();
+    Signature* signMessage(const std::string& publicKey, BIGNUM* messageHash, const std::vector<int>& signingGroup) {
+        initializeCryptoParameters();
 
-        for (int port : ports) {
-            send_to_participant(pub_str, port, "generate_k_and_y\n");
+        Signature* signature = new Signature();
+
+        for (int port : signingGroup) {
+            sendCommandToParticipant(publicKey, port, "generate_k_and_y\n");
         }
 
-        BIGNUM* k_sum = BN_new();
-        BIGNUM* y_sum = BN_new();
-        BN_zero(k_sum); BN_zero(y_sum);
-        for (int port : ports) {
-            BIGNUM* k = str_to_bn(send_to_participant(pub_str, port, "get k\n"));
-            BIGNUM* y = str_to_bn(send_to_participant(pub_str, port, "get y\n"));
-            BN_mod_add(k_sum, k_sum, k, order, ctx);
-            BN_mod_add(y_sum, y_sum, y, order, ctx);
+        BIGNUM *kSum = BN_new(), *ySum = BN_new();
+        BN_zero(kSum); BN_zero(ySum);
+
+        for (int port : signingGroup) {
+            BIGNUM* k = hexStringToBignum(sendCommandToParticipant(publicKey, port, "get k\n"));
+            BIGNUM* y = hexStringToBignum(sendCommandToParticipant(publicKey, port, "get y\n"));
+            BN_mod_add(kSum, kSum, k, curveOrder, bnContext);
+            BN_mod_add(ySum, ySum, y, curveOrder, bnContext);
             BN_free(k); BN_free(y);
         }
-        BIGNUM* ky = BN_new();
-        BN_mod_mul(ky, k_sum, y_sum, order, ctx);
-        BN_free(k_sum); BN_free(y_sum);
 
-        BIGNUM* delta_inv = BN_mod_inverse(nullptr, ky, order, ctx);
-        BN_free(ky);
-        char* delta_hex = BN_bn2hex(delta_inv);
-        BN_free(delta_inv);
+        BIGNUM* kyProduct = BN_new();
+        BN_mod_mul(kyProduct, kSum, ySum, curveOrder, bnContext);
+        BN_free(kSum); BN_free(ySum);
 
-        EC_POINT* R = EC_POINT_new(group);
-        EC_POINT_set_to_infinity(group, R);
+        BIGNUM* deltaInv = BN_mod_inverse(nullptr, kyProduct, curveOrder, bnContext);
+        BN_free(kyProduct);
 
-        for (int port : ports) {
-            std::string response = send_to_participant(pub_str, port, std::string("compute_R ") + delta_hex + "\n");
-            // Convert Ri from hex response
-            EC_POINT* Ri = EC_POINT_new(group);
-            EC_POINT_hex2point(group, response.c_str(), Ri, ctx);
-            EC_POINT_add(group, R, R, Ri, ctx);
+        char* deltaHex = BN_bn2hex(deltaInv);
+        BN_free(deltaInv);
+
+        EC_POINT* aggregatedR = EC_POINT_new(curveGroup);
+        EC_POINT_set_to_infinity(curveGroup, aggregatedR);
+
+        for (int port : signingGroup) {
+            std::string RStr = sendCommandToParticipant(publicKey, port, "compute_R " + std::string(deltaHex) + "\n");
+            EC_POINT* Ri = EC_POINT_new(curveGroup);
+            EC_POINT_hex2point(curveGroup, RStr.c_str(), Ri, bnContext);
+            EC_POINT_add(curveGroup, aggregatedR, aggregatedR, Ri, bnContext);
             EC_POINT_free(Ri);
         }
-        OPENSSL_free(delta_hex);
 
-        sig->r = H0(R);
-        EC_POINT_free(R);
+        OPENSSL_free(deltaHex);
+        signature->r = hashPointToBignum(aggregatedR);
+        EC_POINT_free(aggregatedR);
 
-        compute_sigma(pub_str, ports);
+        computeSigmaValues(publicKey, signingGroup);
 
-        sig->s = BN_new(); BN_zero(sig->s);
-        for (int port : ports) {
-            BIGNUM* k = str_to_bn(send_to_participant(pub_str, port, "get k\n"));
-            BIGNUM* sigma = str_to_bn(send_to_participant(pub_str, port, "get sigma\n"));
-            BIGNUM* temp = BN_new();
-            BIGNUM* s_partial = BN_new();
-            BN_mod_mul(temp, sig->r, sigma, order, ctx);
-            BN_mod_mul(s_partial, k, msgHash, order, ctx);
-            BN_mod_add(s_partial, s_partial, temp, order, ctx);
-            BN_mod_add(sig->s, sig->s, s_partial, order, ctx);
-            BN_free(k); BN_free(sigma); BN_free(temp); BN_free(s_partial);
+        signature->s = BN_new(); BN_zero(signature->s);
+
+        for (int port : signingGroup) {
+            BIGNUM* k = hexStringToBignum(sendCommandToParticipant(publicKey, port, "get k\n"));
+            BIGNUM* sigma = hexStringToBignum(sendCommandToParticipant(publicKey, port, "get sigma\n"));
+
+            BIGNUM* tempMul = BN_new();
+            BIGNUM* partialS = BN_new();
+
+            BN_mod_mul(tempMul, signature->r, sigma, curveOrder, bnContext);
+            BN_mod_mul(partialS, k, messageHash, curveOrder, bnContext);
+            BN_mod_add(partialS, partialS, tempMul, curveOrder, bnContext);
+            BN_mod_add(signature->s, signature->s, partialS, curveOrder, bnContext);
+
+            BN_free(k); BN_free(sigma);
+            BN_free(tempMul); BN_free(partialS);
         }
 
-        BIGNUM* half_order = BN_new();
-        BN_rshift1(half_order, order);
-        if (BN_cmp(sig->s, half_order) > 0) {
-            BN_sub(sig->s, order, sig->s);
+        BIGNUM* halfOrder = BN_new();
+        BN_rshift1(halfOrder, curveOrder);
+        if (BN_cmp(signature->s, halfOrder) > 0) {
+            BN_sub(signature->s, curveOrder, signature->s);
         }
-        BN_free(half_order);
-        cleanup();
-        return sig;
+        BN_free(halfOrder);
+
+        cleanupCryptoParameters();
+
+        return signature;
     }
 
 }

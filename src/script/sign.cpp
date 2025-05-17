@@ -71,12 +71,17 @@ bool MutableTransactionSignatureCreator::CreateCustomSig(
 
     std::string pubkey_hex = HexStr(MakeUCharSpan(pubkey));
     // נצטרך לקבל איזה קבוצה חותמת מהui ואז לשלוח לsign
-    Signature* sig = DistributedSigner:: signMessage(pubkey_hex, bn_hash, {5000, 5001});  // Sign the message
+    Signature* sig = DistributedSigner:: signMessage(pubkey_hex, bn_hash, {5002, 5000, 5003});  // Sign the message
+    BN_free(bn_hash);
 
     if (!sig) return false;  // If the signature is null, return false
 
     ECDSA_SIG* ossl_sig = ECDSA_SIG_new();
     ECDSA_SIG_set0(ossl_sig, BN_dup(sig->r), BN_dup(sig->s));
+
+    BN_free(sig->r);
+    BN_free(sig->s);
+    delete sig;
 
     unsigned char der_sig[72];
     unsigned int der_len = i2d_ECDSA_SIG(ossl_sig, nullptr);
@@ -86,6 +91,7 @@ bool MutableTransactionSignatureCreator::CreateCustomSig(
 
     vchSig.assign(der_sig, der_sig + der_len);
     vchSig.push_back((unsigned char)hashtype);
+    ECDSA_SIG_free(ossl_sig);
 
     return true;  // Return true if the signature is successfully created
 }

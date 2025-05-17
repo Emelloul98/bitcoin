@@ -711,7 +711,7 @@ public:
 
                 CPubKey pubkey = keyChild.GetPubKey();
                 std::string pubkey_str = HexStr(MakeUCharSpan(pubkey));
-                DistributedSigner:: set_threshold(2, 4); // נצטרך לקבל נתונים מהui
+                DistributedSigner:: setThreshold(3, 4); // נצטרך לקבל נתונים מהui
                 DistributedSigner:: generateKeys(pubkey_str, priv_bn);
 
                 // Free memory

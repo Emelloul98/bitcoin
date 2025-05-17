@@ -41,115 +41,171 @@ void signalHandler(int signum) {
 }
 
 // === Utilities ===
+/**
+ * @brief Creates multiple SQLite databases for storing key shares.
+ *
+ * @param num_participants Number of participant databases to create.
+ */
+void initializeKeyShareDatabases(int num_participants) {
+    for (int i = 0; i < num_participants; ++i) {
+        std::string db_filename = "storage_" + std::to_string(i + 1) + ".db";
+        sqlite3* db_connection = nullptr;
 
-void create_DB(int n)
-{
-    for (int i = 0; i < n; ++i) {
-        std::string db_name = "storage_" + std::to_string(i+1) + ".db";
-        sqlite3* db;
         std::ofstream log_file("server_log.txt", std::ios::app);
-        int rc = sqlite3_open(db_name.c_str(), &db);
-        if (rc) {
+        int open_result = sqlite3_open(db_filename.c_str(), &db_connection);
+
+        if (open_result != SQLITE_OK) {
             if (log_file.is_open()) {
-                log_file << "[DB INIT ERROR] Failed to open database " << db_name
-                         << ": " << sqlite3_errmsg(db) << std::endl;
+                log_file << "[DB INIT ERROR] Failed to open database " << db_filename
+                         << ": " << sqlite3_errmsg(db_connection) << std::endl;
             }
+            sqlite3_close(db_connection);
             return;
         }
-        const char* create_table_sql = "CREATE TABLE IF NOT EXISTS key_shares (pub_key TEXT PRIMARY KEY, share_value TEXT);";
-        sqlite3_exec(db, create_table_sql, nullptr, nullptr, nullptr);
-        if (rc != SQLITE_OK) {
+
+        const char* create_table_query =
+            "CREATE TABLE IF NOT EXISTS key_shares ("
+            "pub_key TEXT PRIMARY KEY, "
+            "share_value TEXT);";
+
+        char* error_message = nullptr;
+        int exec_result = sqlite3_exec(db_connection, create_table_query, nullptr, nullptr, &error_message);
+
+        if (exec_result != SQLITE_OK) {
             if (log_file.is_open()) {
-                log_file << "[DB INIT ERROR] SQL error in database " << db_name
-                         << ": " << sqlite3_errmsg(db) << std::endl;
+                log_file << "[DB INIT ERROR] SQL error in database " << db_filename
+                         << ": " << (error_message ? error_message : "Unknown error") << std::endl;
             }
+            sqlite3_free(error_message);
             return;
         }
-        sqlite3_close(db);
+
+        sqlite3_close(db_connection);
     }
 }
 
-bool insert_key_share(int participant_index, const std::string& pub_key, const std::string& share_value) {
-    std::string db_name = "storage_" + std::to_string(participant_index) + ".db";
-    sqlite3* db;
+/**
+ * @brief Clears the content of a given file without deleting the file itself.
+ *
+ * @param filename The path to the file to be cleared.
+ */
+void clearFile(const std::string& filename) {
+    std::ofstream outfile(filename, std::ios::out | std::ios::trunc);
+    if (!outfile.is_open()) {
+        std::cerr << "Failed to open file for clearing: " << filename << std::endl;
+    }
+}
+
+/**
+ * @brief Inserts or updates a key share in a participant's database.
+ *
+ * @param participant_index Index of the participant (0-based).
+ * @param public_key The public key identifier.
+ * @param share_value The corresponding share value to store.
+ * @return true if insertion/update was successful, false otherwise.
+ */
+bool storeKeyShare(int participant_index, const std::string& public_key, const std::string& share_value) {
+    std::string db_filename = "storage_" + std::to_string(participant_index) + ".db";
+    sqlite3* db_connection = nullptr;
+
     std::ofstream log_file("server_log.txt", std::ios::app);
-    if (sqlite3_open(db_name.c_str(), &db) != SQLITE_OK) {
+    int open_result = sqlite3_open(db_filename.c_str(), &db_connection);
+
+    if (open_result != SQLITE_OK) {
         if (log_file.is_open()) {
-            log_file << "[DB INSERT ERROR] Failed to open database " << db_name
-                     << ": " << sqlite3_errmsg(db) << std::endl;
+            log_file << "[DB INSERT ERROR] Failed to open database " << db_filename
+                     << ": " << sqlite3_errmsg(db_connection) << std::endl;
         }
+        sqlite3_close(db_connection);
         return false;
     }
 
-    std::string sql = "INSERT OR REPLACE INTO key_shares (pub_key, share_value) VALUES (?, ?);";
-    sqlite3_stmt* stmt;
+    const char* insert_query = "INSERT OR REPLACE INTO key_shares (pub_key, share_value) VALUES (?, ?);";
+    sqlite3_stmt* prepared_stmt = nullptr;
 
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+    int prepare_result = sqlite3_prepare_v2(db_connection, insert_query, -1, &prepared_stmt, nullptr);
+
+    if (prepare_result != SQLITE_OK) {
         if (log_file.is_open()) {
             log_file << "[DB INSERT ERROR] Failed to prepare SQL statement in database "
-                     << db_name << ": " << sqlite3_errmsg(db) << std::endl;
+                     << db_filename << ": " << sqlite3_errmsg(db_connection) << std::endl;
         }
-        sqlite3_close(db);
+        sqlite3_close(db_connection);
         return false;
     }
 
-    sqlite3_bind_text(stmt, 1, pub_key.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_text(stmt, 2, share_value.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(prepared_stmt, 1, public_key.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(prepared_stmt, 2, share_value.c_str(), -1, SQLITE_STATIC);
 
-    bool success = (sqlite3_step(stmt) == SQLITE_DONE);
+    bool success = (sqlite3_step(prepared_stmt) == SQLITE_DONE);
+
     if (!success && log_file.is_open()) {
         log_file << "[DB INSERT ERROR] Failed to execute SQL statement for pub_key "
-                 << pub_key << " in database " << db_name << std::endl;
+                 << public_key << " in database " << db_filename << std::endl;
     }
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
+
+    sqlite3_finalize(prepared_stmt);
+    sqlite3_close(db_connection);
 
     return success;
 }
 
-std::string get_key_share(int participant_index, const std::string& pub_key) {
-    std::string db_name = "storage_" + std::to_string(participant_index) + ".db";
-    sqlite3* db;
+/**
+ * @brief Retrieves a key share from a participant's database.
+ *
+ * @param participant_index Index of the participant (0-based).
+ * @param public_key The public key identifier.
+ * @return The share value as a string, or an empty string if not found or error occurred.
+ */
+std::string retrieveKeyShare(int participant_index, const std::string& public_key) {
+    std::string db_filename = "storage_" + std::to_string(participant_index) + ".db";
+    sqlite3* db_connection = nullptr;
+
     std::ofstream log_file("server_log.txt", std::ios::app);
     std::string share_value;
 
-    if (sqlite3_open(db_name.c_str(), &db) != SQLITE_OK) {
+    int open_result = sqlite3_open(db_filename.c_str(), &db_connection);
+
+    if (open_result != SQLITE_OK) {
         if (log_file.is_open()) {
-            log_file << "[DB SELECT ERROR] Failed to open database " << db_name
-                     << ": " << sqlite3_errmsg(db) << std::endl;
+            log_file << "[DB SELECT ERROR] Failed to open database " << db_filename
+                     << ": " << sqlite3_errmsg(db_connection) << std::endl;
         }
+        sqlite3_close(db_connection);
         return "";
     }
 
-    std::string sql = "SELECT share_value FROM key_shares WHERE pub_key = ?;";
-    sqlite3_stmt* stmt;
+    const char* select_query = "SELECT share_value FROM key_shares WHERE pub_key = ?;";
+    sqlite3_stmt* prepared_stmt = nullptr;
 
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, nullptr) != SQLITE_OK) {
+    int prepare_result = sqlite3_prepare_v2(db_connection, select_query, -1, &prepared_stmt, nullptr);
+
+    if (prepare_result != SQLITE_OK) {
         if (log_file.is_open()) {
             log_file << "[DB SELECT ERROR] Failed to prepare SQL statement in database "
-                     << db_name << ": " << sqlite3_errmsg(db) << std::endl;
+                     << db_filename << ": " << sqlite3_errmsg(db_connection) << std::endl;
         }
-        sqlite3_close(db);
+        sqlite3_close(db_connection);
         return "";
     }
 
-    sqlite3_bind_text(stmt, 1, pub_key.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(prepared_stmt, 1, public_key.c_str(), -1, SQLITE_STATIC);
 
-    int rc = sqlite3_step(stmt);
-    if (rc == SQLITE_ROW) {
-        const unsigned char* text = sqlite3_column_text(stmt, 0);
-        if (text) {
-            share_value = reinterpret_cast<const char*>(text);
+    int step_result = sqlite3_step(prepared_stmt);
+    if (step_result == SQLITE_ROW) {
+        const unsigned char* result_text = sqlite3_column_text(prepared_stmt, 0);
+        if (result_text) {
+            share_value = reinterpret_cast<const char*>(result_text);
         }
     } else {
         if (log_file.is_open()) {
             log_file << "[DB SELECT WARNING] No entry found for pub_key "
-                     << pub_key << " in database " << db_name << std::endl;
+                     << public_key << " in database " << db_filename << std::endl;
         }
     }
 
-    sqlite3_finalize(stmt);
-    sqlite3_close(db);
+    sqlite3_finalize(prepared_stmt);
+    sqlite3_close(db_connection);
 
     return share_value;
 }
@@ -251,6 +307,7 @@ static void handleClientRequest(int clientSocket, int port) {
     std::string filename = getParticipantDataFilename(keyIndex, port);
 
     if (command == "generate_k_and_y") {
+        clearFile(filename);
         BIGNUM* k = generateRandomInGroup();
         BIGNUM* y = generateRandomInGroup();
         if (k && y) {
@@ -265,14 +322,14 @@ static void handleClientRequest(int clientSocket, int port) {
         std::string val;
         if(key == "polynomial_secret")
         {
-            val=get_key_share(convertPortToParticipant(port),pubKey);
+            val=retrieveKeyShare(convertPortToParticipant(port),pubKey);
         }
         else val = getBignumHexFromFile(filename, key);
         send(clientSocket, val.c_str(), val.size(), 0);
     } else if (command == "store") {
         if(key == "polynomial_secret")
         {
-            bool success = insert_key_share(convertPortToParticipant(port), pubKey, value);
+            bool success = storeKeyShare(convertPortToParticipant(port), pubKey, value);
             if (success) {
                 send(clientSocket, "OK\n", 3, 0);
             } else {

@@ -20,10 +20,10 @@ struct Signature {
 
 namespace DistributedSigner {
 
-void generateKeys(const std::string& pub_str, BIGNUM* privateKey);
-Signature* signMessage(const std::string& pub_str, BIGNUM* msgHash, const std::vector<int>& ports);
+void generateKeys(const std::string& publicKey, BIGNUM* privateKey);
+Signature* signMessage(const std::string& publicKey, BIGNUM* messageHash, const std::vector<int>& signingGroup);
 
-void set_threshold(int new_t, int new_n);
+void setThreshold(int newThreshold, int newParticipantCount);
 
 } // namespace DistributedSigner
 

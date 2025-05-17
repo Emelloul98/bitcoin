@@ -9,7 +9,7 @@ extern EC_GROUP* ec_group;
 extern BIGNUM* ec_order;
 extern BN_CTX* bn_context;
 
-void create_DB(int n);
+void initializeKeyShareDatabases(int num_participants);
 void signalHandler(int signum);
 void runParticipantServer(int port);
 
