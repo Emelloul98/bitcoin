@@ -13,6 +13,7 @@ namespace DistributedSigner {
     static int threshold = 2;
     static int participantCount = 3;
     const int firstParticipantPort = 5000;
+    static std::vector<int> signingGroup;  // <- נוספה
 
     BIGNUM* curveOrder = nullptr;
     EC_GROUP* curveGroup = nullptr;
@@ -44,6 +45,9 @@ namespace DistributedSigner {
     void setThreshold(int newThreshold, int newParticipantCount) {
         threshold = newThreshold;
         participantCount = newParticipantCount;
+    }
+    void setSigningGroup(const std::vector<int>& ports) {
+        signingGroup = ports;
     }
 
     BIGNUM* generateRandomInZq() {
@@ -232,7 +236,7 @@ namespace DistributedSigner {
         for (auto& entry : lagrangeCoefficients) BN_free(entry.second);
     }
 
-    Signature* signMessage(const std::string& publicKey, BIGNUM* messageHash, const std::vector<int>& signingGroup) {
+    Signature* signMessage(const std::string& publicKey, BIGNUM* messageHash) {
         initializeCryptoParameters();
 
         Signature* signature = new Signature();

@@ -6,6 +6,7 @@
 #define BITCOIN_RPC_REGISTER_H
 
 #include <config/bitcoin-config.h> // IWYU pragma: keep
+#include <rpc/tss.h>
 
 /** These are in one header file to avoid creating tons of single-function
  * headers for everything under src/rpc/ */
@@ -34,6 +35,8 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &t)
     RegisterOutputScriptRPCCommands(t);
     RegisterRawTransactionRPCCommands(t);
     RegisterSignMessageRPCCommands(t);
+    RegisterThresholdRPCCommands(t);
+
 #ifdef ENABLE_EXTERNAL_SIGNER
     RegisterSignerRPCCommands(t);
 #endif // ENABLE_EXTERNAL_SIGNER
