@@ -19,11 +19,8 @@ EC_GROUP* ec_group = nullptr;
 BIGNUM* ec_order = nullptr;
 BN_CTX* bn_context = nullptr;
 
-static std::unordered_map<std::string, int> publicKeyToIndex;
-static int participantCounter = 0;
 std::map<int, int> serverSockets;
 
-std::mutex publicKeyMutex;
 std::mutex socketMapMutex;
 
 volatile bool running = true;
@@ -220,9 +217,9 @@ static int convertPortToParticipant(int port) {
 /**
  * Get filename for participant data based on key index and port.
  */
-static std::string getParticipantDataFilename(int keyIndex, int port) {
+static std::string getParticipantDataFilename(int port) {
     int participantId = convertPortToParticipant(port);
-    return "participant_" + std::to_string(keyIndex) + std::to_string(participantId) + ".dat";
+    return "participant_" + std::to_string(participantId) + ".dat";
 }
 
 /**
@@ -295,16 +292,7 @@ static void handleClientRequest(int clientSocket, int port) {
     std::getline(iss, value);
     if (!value.empty() && value[0] == ' ') value.erase(0, 1);
 
-    {
-        std::lock_guard<std::mutex> lock(publicKeyMutex);
-        if (publicKeyToIndex.find(pubKey) == publicKeyToIndex.end()) {
-            participantCounter++;
-            publicKeyToIndex[pubKey] = participantCounter;
-        }
-    }
-
-    int keyIndex = publicKeyToIndex[pubKey];
-    std::string filename = getParticipantDataFilename(keyIndex, port);
+    std::string filename = getParticipantDataFilename(port);
 
     if (command == "generate_k_and_y") {
         clearFile(filename);
@@ -392,6 +380,14 @@ void runParticipantServer(int port) {
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSocket < 0) {
         perror("Socket creation failed");
+        return;
+    }
+
+    // Allow address reuse
+    int opt = 1;
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0) {
+        perror("setsockopt(SO_REUSEADDR) failed");
+        close(serverSocket);
         return;
     }
 

@@ -13,7 +13,7 @@ namespace DistributedSigner {
     static int threshold = 2;
     static int participantCount = 3;
     const int firstParticipantPort = 5000;
-    static std::vector<int> signingGroup;  // <- נוספה
+    static std::vector<int> signingGroup = {5000, 5001};
 
     BIGNUM* curveOrder = nullptr;
     EC_GROUP* curveGroup = nullptr;
@@ -45,6 +45,9 @@ namespace DistributedSigner {
     void setThreshold(int newThreshold, int newParticipantCount) {
         threshold = newThreshold;
         participantCount = newParticipantCount;
+
+        signingGroup.resize(threshold);
+        std::iota(signingGroup.begin(), signingGroup.end(), firstParticipantPort);
     }
     void setSigningGroup(const std::vector<int>& ports) {
         signingGroup = ports;
@@ -167,7 +170,7 @@ namespace DistributedSigner {
     }
 
 
-    void computeSigmaValues(const std::string& publicKey, const std::vector<int>& signingGroup) {
+    void computeSigmaValues(const std::string& publicKey) {
         BIGNUM *numerator = BN_new(), *denominator = BN_new(), *inverseDen = BN_new();
         BIGNUM *tempProduct = BN_new(), *kSum = BN_new();
         BN_zero(kSum);
@@ -281,7 +284,7 @@ namespace DistributedSigner {
         signature->r = hashPointToBignum(aggregatedR);
         EC_POINT_free(aggregatedR);
 
-        computeSigmaValues(publicKey, signingGroup);
+        computeSigmaValues(publicKey);
 
         signature->s = BN_new(); BN_zero(signature->s);
 

@@ -1,66 +1,55 @@
 #!/bin/bash
 
-#rm -rf ~/.bitcoin/regtest
-rm -r ~/.bitcoin/regtest/wallets/wallet1
-rm -r ~/.bitcoin/regtest/wallets/wallet2
-
-# Check if bitcoind is already running
+# Try to stop bitcoind gracefully if it's running
 if pgrep -x "bitcoind" > /dev/null
 then
-    echo "bitcoind is already running."
-else
-    # Start bitcoind in regtest mode
-    echo "Starting bitcoind..."
-    src/bitcoind -regtest -daemon -fallbackfee=0.001
-    sleep 3  # Wait for the server to start
+    src/bitcoin-cli -regtest stop
+    sleep 2
+    while pgrep -x "bitcoind" > /dev/null; do
+        sleep 1
+    done
 fi
 
-# Check if the wallets exist, if not create them
-echo "Checking if wallets exist..."
-if [ ! -d ~/.bitcoin/regtest/wallets/wallet1 ]; then
-    echo "Creating wallet1..."
-    src/bitcoin-cli -regtest createwallet "wallet1"
-else
-    echo "wallet1 already exists, loading it..."
-fi
+rm -rf ~/.bitcoin/regtest
 
-if [ ! -d ~/.bitcoin/regtest/wallets/wallet2 ]; then
-    echo "Creating wallet2..."
-    src/bitcoin-cli -regtest createwallet "wallet2"
-else
-    echo "wallet2 already exists, loading it..."
-fi
+src/bitcoind -regtest -daemon -fallbackfee=0.001
+sleep 3  # Wait for the server to start
 
-## Load the wallets
-#echo "Loading wallets..."
-#src/bitcoin-cli -regtest loadwallet "wallet1"
-#src/bitcoin-cli -regtest loadwallet "wallet2"
+src/bitcoin-cli -regtest createwallet "wallet1"
+src/bitcoin-cli -regtest createwallet "wallet2"
+src/bitcoin-cli -regtest createwallet "temp"
+
 
 # Check the initial balances of the wallets
 echo "Checking initial balances..."
 src/bitcoin-cli -regtest -rpcwallet="wallet1" getbalance
 src/bitcoin-cli -regtest -rpcwallet="wallet2" getbalance
 
-# Create a new address for receiving Bitcoin in the "newtestwallet"
-NEW_WALLET_ADDRESS=$(src/bitcoin-cli -regtest -rpcwallet="wallet1" getnewaddress)
-echo "New wallet address: $NEW_WALLET_ADDRESS"
+# Create a new address for receiving Bitcoin in the "wallet1"
+WALLET1=$(src/bitcoin-cli -regtest -rpcwallet="wallet1" getnewaddress)
+echo "wallet1 address: $WALLET1"
+
+# Get a new address from the second wallet ("wallet2")
+WALLET2=$(src/bitcoin-cli -regtest -rpcwallet="wallet2" getnewaddress)
+echo "wallet2 address: $WALLET2"
+
+TEMP=$(src/bitcoin-cli -regtest -rpcwallet="temp" getnewaddress)
 
 # Mine 101 blocks and assign them to the new wallet address
-echo "Mining 101 block..."
-src/bitcoin-cli -regtest generatetoaddress 101 "$NEW_WALLET_ADDRESS"
-
-# Get a new address from the second wallet ("testwallet")
-TEST_WALLET_ADDRESS=$(src/bitcoin-cli -regtest -rpcwallet="wallet2" getnewaddress)
-echo "Test wallet address: $TEST_WALLET_ADDRESS"
+echo "Mining 1 block..."
+src/bitcoin-cli -regtest generatetoaddress 1 "$WALLET1"
+src/bitcoin-cli -regtest generatetoaddress 100 "$TEMP" > /dev/null
+echo "wallet1 balance:"
+src/bitcoin-cli -regtest -rpcwallet="wallet1" getbalance
 
 # Send 1 BTC from "newtestwallet" to "testwallet"
-echo "Sending 0.01 BTC from wallet1 to wallet2..."
-src/bitcoin-cli -regtest -rpcwallet="wallet1" sendtoaddress "$TEST_WALLET_ADDRESS" 0.01
+echo "Sending 1 BTC from wallet1 to wallet2..."
+src/bitcoin-cli -regtest -rpcwallet="wallet1" sendtoaddress "$WALLET2" 1
 
-# Show the final balances after the transaction
+src/bitcoin-cli -regtest generatetoaddress 1 "$TEMP" > /dev/null
+
 echo "Final balances:"
 src/bitcoin-cli -regtest -rpcwallet="wallet1" getbalance
 src/bitcoin-cli -regtest -rpcwallet="wallet2" getbalance
 
 echo "Setup complete!"
-#-regtest -fallbackfee=0.01
