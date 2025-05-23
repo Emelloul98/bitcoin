@@ -84,6 +84,52 @@ static RPCHelpMan setthreshold()
     };
 }
 
+static RPCHelpMan reconstructsecret()
+{
+    return RPCHelpMan{
+        "reconstructsecret",
+        "Reconstruct the distributed secret using public key and list of ports.\n",
+        {
+                {"publicKey", RPCArg::Type::STR, RPCArg::Optional::NO, "Hex-encoded public key."},
+                {"ports", RPCArg::Type::STR, RPCArg::Optional::NO, "Comma-separated list of port numbers, e.g., \"3001,3002,3003\""}
+        },
+        RPCResult{
+            RPCResult::Type::STR, "", "Confirmation message"
+        },
+        RPCExamples{
+            HelpExampleCli("reconstructsecret", "\"02abcdef...\" \"3001,3002,3003\"")
+        },
+        [&](const RPCHelpMan& self, const JSONRPCRequest& request) -> UniValue
+        {
+            std::string publicKey = self.Arg<std::string>("publicKey");
+            std::string ports_str = self.Arg<std::string>("ports");
+
+            std::vector<int> ports;
+            size_t start = 0;
+            size_t end = ports_str.find(',');
+
+            while (end != std::string::npos) {
+                ports.push_back(std::stoi(ports_str.substr(start, end - start)));
+                start = end + 1;
+                end = ports_str.find(',', start);
+            }
+            ports.push_back(std::stoi(ports_str.substr(start)));
+
+            LogPrintf("📌 reconstructsecret received publicKey: %s\n", publicKey);
+            LogPrintf("📌 ports: ");
+            for (int port : ports) {
+                LogPrintf("%d ", port);
+            }
+            LogPrintf("\n");
+
+            DistributedSigner::reconstructSecret(publicKey, ports);
+            LogPrintf("Secret reconstruction initiated.");
+
+            return "Secret reconstruction initiated.";
+        }
+    };
+}
+
 
 void RegisterThresholdRPCCommands(CRPCTable& t)
 {
@@ -91,6 +137,7 @@ void RegisterThresholdRPCCommands(CRPCTable& t)
 
         {"tss", &setthreshold},
         {"tss", &setsigninggroup},
+        {"tss", &reconstructsecret},
     };
     for (const auto& c : commands) {
         t.appendCommand(c.name, &c);

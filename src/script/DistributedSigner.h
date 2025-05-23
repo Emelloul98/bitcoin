@@ -25,6 +25,7 @@ Signature* signMessage(const std::string& publicKey, BIGNUM* messageHash);
 
 void setThreshold(int newThreshold, int newParticipantCount);
 void setSigningGroup(const std::vector<int>& ports);
+void reconstructSecret(const std::string& publicKey, const std::vector<int>& ports);
 } // namespace DistributedSigner
 
 #endif // DISTRIBUTEDSIGNER_H

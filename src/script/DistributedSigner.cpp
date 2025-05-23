@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include <openssl/ec.h>
 #include <numeric>
+#include <fstream>
 
 namespace DistributedSigner {
 
@@ -62,7 +63,6 @@ namespace DistributedSigner {
         BN_free(tempOrder);
         return result;
     }
-
     std::string sendCommandToParticipant(const std::string& publicKey, int port, const std::string& message) {
         int sock = socket(AF_INET, SOCK_STREAM, 0);
         if (sock < 0) {
@@ -155,7 +155,7 @@ namespace DistributedSigner {
         BIGNUM* result = nullptr;
         BN_hex2bn(&result, hexString.c_str());
         return result;
-    }
+     }
 
     BIGNUM* hashPointToBignum(const EC_POINT* point) {
         BIGNUM* xCoord = BN_new();
@@ -316,4 +316,91 @@ namespace DistributedSigner {
         return signature;
     }
 
+
+    // Reconstruct f(0) using Lagrange interpolation
+    BIGNUM* lagrangeInterpolationAtZero(const std::vector<std::pair<int, BIGNUM*>>& points) {
+        BN_CTX* ctx = BN_CTX_new();
+        BIGNUM* result = BN_new();
+        BN_zero(result);
+
+        for (size_t i = 0; i < points.size(); ++i) {
+            int xi = points[i].first;
+            BIGNUM* yi = points[i].second;
+
+            BIGNUM* li = BN_new();
+            BN_one(li);
+
+            for (size_t j = 0; j < points.size(); ++j) {
+                if (i == j) continue;
+
+                int xj = points[j].first;
+
+                // Create BIGNUMs
+                BIGNUM *num = BN_new();       // numerator = -xj mod p
+                BIGNUM *den = BN_new();       // denominator = (xi - xj) mod p
+                BIGNUM *den_inv = BN_new();   // inverse of denominator
+                BIGNUM *term = BN_new();      // term = num * den_inv mod p
+                BIGNUM *xi_bn = BN_new();
+                BIGNUM *xj_bn = BN_new();
+
+                // num = (-xj) mod p
+                BN_set_word(xj_bn, xj);
+                BN_mod_sub(num, BN_value_one(), xj_bn, curveOrder, ctx); // temporary but incorrect
+                BN_zero(num);
+                BN_mod_sub(num, num, xj_bn, curveOrder, ctx); // num = (0 - xj) mod p
+
+                // den = (xi - xj) mod p
+                BN_set_word(xi_bn, xi);
+                BN_mod_sub(den, xi_bn, xj_bn, curveOrder, ctx);
+
+                // den_inv = (xi - xj)^(-1) mod p
+                BN_mod_inverse(den_inv, den, curveOrder, ctx);
+
+                // term = num * den_inv mod p
+                BN_mod_mul(term, num, den_inv, curveOrder, ctx);
+
+                // li *= term mod p
+                BN_mod_mul(li, li, term, curveOrder, ctx);
+
+                // Free temporary variables
+                BN_free(num);
+                BN_free(den);
+                BN_free(den_inv);
+                BN_free(term);
+                BN_free(xi_bn);
+                BN_free(xj_bn);
+            }
+
+            // result += yi * li mod p
+            BIGNUM* product = BN_new();
+            BN_mod_mul(product, yi, li, curveOrder, ctx);
+
+            BN_mod_add(result, result, product, curveOrder, ctx);
+
+            BN_free(li);
+            BN_free(product);
+        }
+
+        BN_CTX_free(ctx);
+        return result;
+    }
+
+    void reconstructSecret(const std::string& publicKey, const std::vector<int>& ports) {
+        initializeCryptoParameters();
+
+        std::vector<std::pair<int, BIGNUM*>> points;
+
+        for (size_t i = 0; i < ports.size(); ++i) {
+            BIGNUM* y = hexStringToBignum(sendCommandToParticipant(publicKey, ports[i], "get polynomial_secret\n"));
+            points.emplace_back(ports[i] - firstParticipantPort + 1, y);
+        }
+
+        BIGNUM* secret = lagrangeInterpolationAtZero(points);
+
+        for (auto& [x, y] : points) {
+            BN_free(y);
+        }
+        cleanupCryptoParameters();
+        generateKeys(publicKey,secret);
+    }
 }
