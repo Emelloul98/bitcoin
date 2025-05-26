@@ -6,6 +6,7 @@
 #include <openssl/ec.h>
 #include <numeric>
 #include <fstream>
+#include <string>
 
 namespace DistributedSigner {
 
@@ -242,6 +243,10 @@ namespace DistributedSigner {
     Signature* signMessage(const std::string& publicKey, BIGNUM* messageHash) {
         initializeCryptoParameters();
 
+		std::ofstream sigOut("partial_signatures.txt", std::ios::out);
+        if (!sigOut.is_open()) {
+            std::cerr << "Failed to open partial_signatures.txt" << std::endl;
+        }
         Signature* signature = new Signature();
 
         for (int port : signingGroup) {
@@ -300,10 +305,15 @@ namespace DistributedSigner {
             BN_mod_add(partialS, partialS, tempMul, curveOrder, bnContext);
             BN_mod_add(signature->s, signature->s, partialS, curveOrder, bnContext);
 
+			char* sigStr = BN_bn2hex(partialS);
+            sigOut << "Storage " << (port-4999) << " signature : " << sigStr << std::endl;
+            OPENSSL_free(sigStr);
+
             BN_free(k); BN_free(sigma);
             BN_free(tempMul); BN_free(partialS);
         }
 
+		sigOut.close();
         BIGNUM* halfOrder = BN_new();
         BN_rshift1(halfOrder, curveOrder);
         if (BN_cmp(signature->s, halfOrder) > 0) {
