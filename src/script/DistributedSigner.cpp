@@ -45,6 +45,9 @@ namespace DistributedSigner {
 
 // === Public functions ===
     void setThreshold(int newThreshold, int newParticipantCount) {
+         if (newThreshold <= 0 || newParticipantCount <= 0 || newThreshold > newParticipantCount) {
+             throw std::invalid_argument("Invalid threshold values: t > 0, n > 0, and t <= n.");
+         }
         threshold = newThreshold;
         participantCount = newParticipantCount;
 
@@ -52,6 +55,9 @@ namespace DistributedSigner {
         std::iota(signingGroup.begin(), signingGroup.end(), firstParticipantPort);
     }
     void setSigningGroup(const std::vector<int>& ports) {
+		if (ports.size() < static_cast<size_t>(threshold)) {
+        	throw std::invalid_argument("Number of setSigningGroup is less than threshold");
+    	}
         signingGroup = ports;
     }
 
@@ -395,7 +401,34 @@ namespace DistributedSigner {
         return result;
     }
 
+    bool CheckPrivateMatchesPublic(const std::string& publicKeyHex, const BIGNUM* secret) {
+    EC_POINT* pubPoint = EC_POINT_new(curveGroup);
+    EC_POINT* derivedPoint = EC_POINT_new(curveGroup);
+
+    if (!EC_POINT_hex2point(curveGroup, publicKeyHex.c_str(), pubPoint, bnContext)) {
+        EC_POINT_free(pubPoint);
+        EC_POINT_free(derivedPoint);
+        cleanupCryptoParameters();
+        throw std::invalid_argument("Invalid public key format");
+    }
+
+    if (!EC_POINT_mul(curveGroup, derivedPoint, secret, nullptr, nullptr, bnContext)) {
+        EC_POINT_free(pubPoint);
+        EC_POINT_free(derivedPoint);
+        cleanupCryptoParameters();
+        throw std::runtime_error("Failed to compute public key from private key");
+    }
+
+    bool matches = (EC_POINT_cmp(curveGroup, pubPoint, derivedPoint, bnContext) == 0);
+
+    EC_POINT_free(pubPoint);
+    EC_POINT_free(derivedPoint);
+    return matches;
+}
     void reconstructSecret(const std::string& publicKey, const std::vector<int>& ports) {
+        if (ports.size() < static_cast<size_t>(threshold)) {
+        	throw std::invalid_argument("Number of secrets is less than threshold");
+    	}
         initializeCryptoParameters();
 
         std::vector<std::pair<int, BIGNUM*>> points;
@@ -410,7 +443,11 @@ namespace DistributedSigner {
         for (auto& [x, y] : points) {
             BN_free(y);
         }
+        bool isMatchesPublic = CheckPrivateMatchesPublic(publicKey, secret);
         cleanupCryptoParameters();
+        if (!isMatchesPublic) {
+            throw std::invalid_argument("Reconstructed secret key does not match the given public key.");
+        }
         generateKeys(publicKey,secret);
     }
 }

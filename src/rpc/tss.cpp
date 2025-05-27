@@ -43,7 +43,11 @@ static RPCHelpMan setsigninggroup()
             }
             LogPrintf("\n");
 
-            DistributedSigner::setSigningGroup(ports);
+            try {
+                DistributedSigner::setSigningGroup(ports);
+            } catch (const std::invalid_argument& e) {
+                return std::string("Error: ") + e.what();
+            }
             return "Signing group ports updated.";
         }
     };
@@ -69,16 +73,20 @@ static RPCHelpMan setthreshold()
                 {
                     std::string t_str = self.Arg<std::string>("t");
                     std::string n_str = self.Arg<std::string>("n");
-
-                    int t = std::stoi(t_str);
-                    int n = std::stoi(n_str);
-
-                    if (t <= 0 || n <= 0 || t > n) {
-                        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid threshold values: t > 0, n > 0, and t <= n.");
+                    int t, n;
+                    try {
+                        t = std::stoi(t_str);
+                        n = std::stoi(n_str);
+                    } catch (const std::invalid_argument& e) {
+                        return "Error: t and n must be numbers.";
                     }
 
                     LogPrintf("📌 setthreshold received t=%d, n=%d\n", t, n);
-                    DistributedSigner::setThreshold(t, n);
+                    try {
+                        DistributedSigner::setThreshold(t, n);
+                    } catch (const std::invalid_argument& e) {
+                        return std::string("Error: ") + e.what();
+                    }
                     return "Threshold updated to t = " + ToString(t) + ", n = " + ToString(n);
                 }
     };
@@ -122,7 +130,15 @@ static RPCHelpMan reconstructsecret()
             }
             LogPrintf("\n");
 
-            DistributedSigner::reconstructSecret(publicKey, ports);
+            try {
+                DistributedSigner::reconstructSecret(publicKey, ports);
+            }catch (const std::invalid_argument& e) {
+                return std::string("Error: ") + e.what();
+            }catch (const std::exception& e) {
+                return std::string("Unexpected error: ") + e.what();
+            } catch (...) {
+                return "Unknown error occurred during secret reconstruction.";
+            }
             LogPrintf("Secret reconstruction initiated.");
 
             return "Secret reconstruction initiated.";

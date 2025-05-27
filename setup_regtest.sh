@@ -53,3 +53,5 @@ src/bitcoin-cli -regtest -rpcwallet="wallet1" getbalance
 src/bitcoin-cli -regtest -rpcwallet="wallet2" getbalance
 
 echo "Setup complete!"
+
+#sqlite3 storage_1.db "SELECT * FROM key_shares;"
