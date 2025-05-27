@@ -306,7 +306,7 @@ namespace DistributedSigner {
             BN_mod_add(signature->s, signature->s, partialS, curveOrder, bnContext);
 
 			char* sigStr = BN_bn2hex(partialS);
-            sigOut << "Storage " << (port-4999) << " signature : " << sigStr << std::endl;
+            sigOut << "Storage" << (port-4999) << " signature:\n" << sigStr << std::endl;
             OPENSSL_free(sigStr);
 
             BN_free(k); BN_free(sigma);
