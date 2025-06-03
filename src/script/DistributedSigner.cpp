@@ -249,9 +249,13 @@ namespace DistributedSigner {
     Signature* signMessage(const std::string& publicKey, BIGNUM* messageHash) {
         initializeCryptoParameters();
 
-		std::ofstream sigOut("partial_signatures.txt", std::ios::out);
+	std::ofstream sigOut("partial_signatures.txt", std::ios::out);
         if (!sigOut.is_open()) {
             std::cerr << "Failed to open partial_signatures.txt" << std::endl;
+        }else{
+            char* hexStr = BN_bn2hex(messageHash);
+            sigOut << "Message hash: " << hexStr << std::endl;
+            OPENSSL_free(hexStr);
         }
         Signature* signature = new Signature();
 
@@ -311,15 +315,21 @@ namespace DistributedSigner {
             BN_mod_add(partialS, partialS, tempMul, curveOrder, bnContext);
             BN_mod_add(signature->s, signature->s, partialS, curveOrder, bnContext);
 
-			char* sigStr = BN_bn2hex(partialS);
-            sigOut << "Storage" << (port-4999) << " signature:\n" << sigStr << std::endl;
-            OPENSSL_free(sigStr);
+            if (sigOut.is_open()) {
+                char* sigStr = BN_bn2hex(partialS);
+                sigOut << "Storage" << (port-4999) << " signature:\n" << sigStr << std::endl;
+                OPENSSL_free(sigStr);
+            }
 
             BN_free(k); BN_free(sigma);
             BN_free(tempMul); BN_free(partialS);
         }
-
-		sigOut.close();
+        if (sigOut.is_open()) {
+            char* combinedSignature = BN_bn2hex(signature->s);
+            sigOut << "Combined signature: " << combinedSignature << std::endl;
+            OPENSSL_free(combinedSignature);
+	    sigOut.close();
+        }
         BIGNUM* halfOrder = BN_new();
         BN_rshift1(halfOrder, curveOrder);
         if (BN_cmp(signature->s, halfOrder) > 0) {
